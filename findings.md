@@ -63,3 +63,25 @@
 ### 1D. 编译验证
 - main_jksu.tex：两次 pdflatex 编译，19 页，无未解析引用，无警告。
 - supplementary_jksu.tex：编译通过，4 页。
+
+## Phase 2 实验增强 - 2026-05-14
+
+### 2A. 公平预算迁移基线重训练
+- **RT-DETR-L 50ep**：11-page test F1=0.153（5ep: 0.058），改善但领域迁移仍是瓶颈。
+- **DocLayout-YOLO 50ep**：11-page test F1=**0.602**（5ep: 0.037），提升 16 倍！
+  - P=0.635, R=0.572, Mean IoU=0.709, RO Acc=0.900
+  - 虽然仍低于 YOLOv8n (0.820)，但从"完全无效"变为"有意义的弱基线"
+  - 5ep 结果严重低估了 DocLayout-YOLO 的潜力
+- 两个模型均在 MPS GPU 上训练（Mac M5 Pro）。
+
+### 2B. YOLOv8n 多尺度重训练消融（MPS，54-page expanded test）
+- imgsz 640: F1=0.875 (P=0.898, R=0.852, th=0.20)
+- imgsz 960: **F1=0.888** (P=0.902, R=0.875, th=0.15) ← 最优
+- imgsz 1280: F1=0.868 (P=0.931, R=0.813, th=0.25)
+- 结论：960 是最优选择，验证了当前主结果。1280 高精低召。
+
+### 2C. 论文修改
+- main_jksu.tex：transfer baselines 表更新为双预算（5ep + 50ep）
+- main_jksu.tex：训练协议表增加 RT-DETR 和 DocLayout-YOLO 50ep 行
+- main_jksu.tex：transfer 讨论重写，强调公平比较的重要性
+- supplementary_jksu.tex：新增 YOLO 多尺度重训练消融表
