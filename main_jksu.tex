@@ -49,7 +49,7 @@ Our contributions are threefold. First, we define a page-level annotation protoc
 
 \section{Related Work}
 \subsection{Historical Document Layout Analysis}
-Historical document image analysis has long treated segmentation as a prerequisite for reliable recognition. Likforman-Sulem et al.~\cite{likforman2007textline} review text-line segmentation methods for historical documents and emphasize that degradation, background noise, and handwriting variability make automatic page decomposition difficult. More recent dataset surveys also show that historical document collections vary widely in script, layout, degradation, and annotation granularity~\cite{nikolaidou2022survey}. For archival manuscripts, baseline and line detection datasets such as READ-BAD further highlight that realistic documents contain heterogeneous page layouts and challenging degradations~\cite{gruning2017readbad}. Traditional Mongolian recognition has also been studied at word or character level, including large online handwriting resources such as MOLHW~\cite{pan2023molhw}; however, page-level layout analysis for handwritten historical Mongolian archives remains underexplored. Our task is closely related to historical segmentation, but the target units are vertical traditional Mongolian text columns rather than horizontal baselines or printed regions.
+Historical document image analysis has long treated segmentation as a prerequisite for reliable recognition. Likforman-Sulem et al.~\cite{likforman2007textline} review text-line segmentation methods for historical documents and emphasize that degradation, background noise, and handwriting variability make automatic page decomposition difficult. More recent dataset surveys also show that historical document collections vary widely in script, layout, degradation, and annotation granularity~\cite{nikolaidou2022survey}. For archival manuscripts, baseline and line detection datasets such as READ-BAD further highlight that realistic documents contain heterogeneous page layouts and challenging degradations~\cite{gruning2017readbad}. Large-scale multi-style historical benchmarks such as M5HisDoc~\cite{shi2023m5hisdoc} have advanced evaluation protocols for rotated, distorted, and resolution-varied historical inputs, though the focus remains on Chinese and printed documents. Traditional Mongolian recognition has been studied at word or character level, including large online handwriting resources such as MOLHW~\cite{pan2023molhw}, and hybrid CNN-Transformer architectures have been applied to Mongolian ancient document recognition~\cite{sun2023mongolian}. A dedicated dataset for Mongolian movable-type newspaper text recognition~\cite{lu2024mongolian} highlights the persistent data scarcity for Mongolian document analysis. Nevertheless, page-level layout analysis for \emph{handwritten} historical Mongolian archives remains underexplored. Our task is closely related to historical segmentation, but the target units are vertical traditional Mongolian text columns rather than horizontal baselines or printed regions.
 
 \subsection{Learning-Based Document Layout Detection}
 Large-scale document-layout datasets and toolkits have accelerated learning-based layout analysis. PubLayNet introduced a large automatically annotated dataset for scientific-document layout analysis~\cite{zhong2019publaynet}, while DocLayNet provided diverse human annotations for modern document layouts~\cite{pfitzmann2022doclaynet}. LayoutParser demonstrated how deep-learning layout models can be organized into reusable document-analysis pipelines~\cite{shen2021layoutparser}. Recent YOLO-style document-layout models further show that one-stage detectors remain competitive for document analysis when adapted to layout-specific scale and aspect-ratio variation~\cite{deng2023yolo, zhao2024doclayout}. These resources mainly focus on modern printed or PDF-derived documents, whereas our archive pages are handwritten, vertically arranged, and affected by scanning rotation and cultural-heritage degradation. We therefore train a lightweight detector on our own page-level annotations instead of relying on off-the-shelf layout categories.
@@ -274,6 +274,26 @@ No-Ignore page & 1 & 0.955 & \textbf{0.955} & \textbf{0.955} \\
 \end{table}
 
 Table~\ref{tab:stratified_yolo} provides diagnostic observations rather than statistically stable subgroup conclusions, because several groups contain only one or two pages. On the original test split, the detector performs best on the no-ignore page and remains reasonably strong on many-column pages, but it is weak on the single few-column page and recall drops on rotated pages. This supports the failure analysis that fixed confidence thresholds and orientation-specific cases remain important targets for future work.
+
+\begin{table}[t]
+\centering
+\scriptsize\setlength{\tabcolsep}{3pt}
+\caption{Stratified YOLOv8n performance on the expanded 54-page test set by column count and Ignore presence, using the 43-page training model at threshold 0.35. With 54 test pages, the subgroup sizes are more informative than the original 11-page diagnostic.}
+\label{tab:stratified_expanded}
+\begin{tabular}{lcccc}
+\toprule
+Group & Pages & Prec. & Rec. & F1 \\
+\midrule
+Few columns ($\leq$5) & 4 & 0.900 & 0.600 & 0.720 \\
+Medium columns (6--15) & 22 & 0.869 & 0.727 & 0.791 \\
+Many columns ($>$15) & 28 & 0.936 & 0.880 & \textbf{0.907} \\
+Pages with Ignore regions & 7 & 0.924 & 0.718 & 0.808 \\
+No-Ignore pages & 47 & 0.914 & 0.837 & 0.874 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:stratified_expanded} confirms the pattern observed in the smaller diagnostic table: many-column pages are best served, few-column pages remain challenging (F1 = 0.720 on 4 pages), and pages with Ignore regions show a modest performance penalty relative to clean pages (0.808 vs. 0.874). The expanded stratification is more informative than the original 11-page version because the few-column group now contains 4 pages instead of 1 and the medium/many groups are large enough to provide meaningful subgroup comparisons.
 
 \begin{table}[t]
 \centering
@@ -523,6 +543,15 @@ Z. Zhao, H. Kang, B. Wang, and C. He, ``DocLayout-YOLO: Enhancing document layou
 
 \bibitem{jocher2023yolov8}
 G. Jocher, A. Chaurasia, and J. Qiu, ``Ultralytics YOLOv8,'' software, version 8.0.0, 2023. Available: \url{https://github.com/ultralytics/ultralytics}.
+
+\bibitem{shi2023m5hisdoc}
+Y. Shi, C. Liu, D. Peng, C. Jian, et al., ``M5HisDoc: A large-scale multi-style Chinese historical document analysis benchmark,'' in \emph{Proc. NeurIPS}, 2023.
+
+\bibitem{sun2023mongolian}
+S. Sun, H. Wei, and Y. Wang, ``A hybrid approach using convolution and transformer for Mongolian ancient documents recognition,'' in \emph{Proc. ICONIP}, 2023.
+
+\bibitem{lu2024mongolian}
+M. Lu, F. Bao, H. Zhang, and G. Gao, ``The image and ground truth dataset of Mongolian movable-type newspapers for text recognition,'' \emph{IJDAR}, 2024.
 
 \end{thebibliography}
 

@@ -8,9 +8,9 @@ This document summarizes major concerns identified during internal review and th
 
 ## 1. Concern: Dataset size is small.
 
-**Response:** We agree. The manuscript has been reframed as a **pilot-scale low-resource benchmark** rather than a large-scale benchmark or complete OCR system. The abstract, contributions, discussion, and conclusion now explicitly state the pilot-scale nature of the dataset. We also added dataset distribution statistics, including page size, column count, Ignore region count, column-box width/height, number of rotated/corrected pages, and pages containing Ignore regions.
+**Response:** We agree. The manuscript has been reframed as a **pilot-scale low-resource benchmark** rather than a large-scale benchmark or complete OCR system. We expanded the dataset from 62 to 105 pages (43 train + 8 val + 54 test) by merging annotation Project 15 and Project 16. The main results now use the expanded 54-page test set (786 valid text-column ground-truth boxes). The original 11-page test is retained for diagnostic tables with explicit labeling. We also added dataset distribution statistics.
 
-**Revision made:** Added Table `dataset_distribution` and pilot-scale wording throughout the manuscript.
+**Revision made:** Expanded dataset to 105 pages; added Table `dataset_distribution`; updated all main results to 54-page test set; updated bootstrap CIs; all original 11-page tables labeled as diagnostic.
 
 ---
 
@@ -48,9 +48,9 @@ This document summarizes major concerns identified during internal review and th
 
 ## 6. Concern: Baseline training budgets are not identical.
 
-**Response:** We added a training-budget and threshold-selection protocol table. RT-DETR and DocLayout-YOLO are now explicitly described as **diagnostic transfer experiments**, not fully optimized head-to-head comparisons. We also state that Faster R-CNN was not exhaustively optimized and deserves future compute-matched study.
+**Response:** We added a training-budget and threshold-selection protocol table documenting all models' epochs and threshold sources. We further conducted fair-budget (50-epoch) retraining of RT-DETR-L and DocLayout-YOLO to match YOLOv8n's training budget (previously they were trained for only 5 epochs). The results are informative: DocLayout-YOLO improved from F1 = 0.037 (5ep) to F1 = 0.602 (50ep), a 16$\times$ improvement, though still below YOLOv8n (0.820). RT-DETR improved from 0.058 to 0.153. The transfer baselines table now reports both budgets. This directly addresses the concern by showing that while fair-budget training substantially improves transfer performance, the domain gap remains the primary bottleneck. We also discuss that Faster R-CNN was trained for only 5 epochs and a compute-matched comparison is left to future work.
 
-**Revision made:** Added `training_protocol` table and revised discussion.
+**Revision made:** Updated `training_protocol` table with 50ep rows; updated `transfer_baselines` table with dual-budget results; revised discussion to emphasize fair-budget comparison.
 
 ---
 
@@ -82,11 +82,12 @@ This document summarizes major concerns identified during internal review and th
 
 We acknowledge that the current work remains limited by:
 
-- 62 total pages and 11 test pages;
-- 5-page IAA subset;
-- no completed expert OCR transcript set yet;
-- zero complete full-page success on the current test split;
-- no compute-matched detector comparison;
+- 105 total pages with 54 test pages (adequate for a pilot study but modest by modern CV standards);
+- 5-page IAA subset (sufficient for minimum diagnostic, but 10--15 pages would be more informative);
+- no completed expert OCR transcript set yet (crop package prepared, awaiting expert availability);
+- low full-page success rate (0.074 for YOLOv8n on the expanded test);
+- Faster R-CNN trained for only 5 epochs (needs compute-matched optimization);
+- transfer baselines improved substantially with fair-budget training but still underperform;
 - limited algorithmic novelty compared with a full method paper.
 
 These limitations are now stated directly in the manuscript.
