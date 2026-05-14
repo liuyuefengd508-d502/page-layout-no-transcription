@@ -91,3 +91,16 @@ We acknowledge that the current work remains limited by:
 - limited algorithmic novelty compared with a full method paper.
 
 These limitations are now stated directly in the manuscript.
+
+---
+
+## Second-Round Revision (R2) — 2026-05-14
+
+### Critical fix
+- **Threshold table caption**: Corrected "11-page validation split" to "8-page validation split" (the dataset has 8 validation pages, not 11).
+
+### Minor improvements
+- **Conclusion wording**: Changed "outperforms" to "achieves higher F1 than ... under the reported protocol" to reduce competition-style language.
+- **Transfer baseline footnote**: Added explicit statement that transfer baselines are evaluated on 11-page test rather than expanded 54-page test due to computational resource limits, with expanded evaluation planned for future work.
+- **Related Work**: Added 3 references — dhSegment (Oliveira et al., ICFHR 2018), DIVA-HisDB (Simistira et al., ICFHR 2016), ICDAR RDCL (Clausner et al., ICDAR 2019) — bringing bibliography to 18 entries.
+- **Reference citations**: Integrated new references into Historical Document Layout Analysis subsection.
