@@ -1,0 +1,185 @@
+\documentclass[pdflatex,sn-mathphys-num]{sn-jnl}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{url}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{xcolor}
+\begin{document}
+\title{Supplementary Material for ``A Pilot Study for Text-Column Detection and Reading-Order Evaluation in Traditional Mongolian Historical Archives''}
+\author[1]{\fnm{Author} \sur{One}}\email{author.one@anonymized.edu}
+\author*[2]{\fnm{Author} \sur{Two}}\email{author.two@anonymized.edu}
+\affil[1]{\orgdiv{Department}, \orgname{University}, \orgaddress{\city{City}, \postcode{000000}, \state{State}, \country{Country}}}
+\affil*[2]{\orgdiv{Department}, \orgname{University}, \orgaddress{\city{City}, \postcode{000000}, \state{State}, \country{Country}}}
+\date{}
+\maketitle
+
+This supplementary material provides diagnostic experiments, extended inter-annotator agreement per-page details, and transfer-detector baselines that supplement the main JKSU CIS manuscript.
+
+\section{Inter-Annotator Agreement --- Per-Page Breakdown}
+
+\begin{table}[t]
+\centering
+\scriptsize\setlength{\tabcolsep}{2pt}
+\caption{Per-page inter-annotator agreement metrics on the 5-page independent subset.}
+\begin{tabular}{lccccccc}
+\toprule
+Page ID & GT cols & Box F1@0.5 & Mean IoU & RO Agree & Ignore F1 \\
+\midrule
+80-48-70-2 & 22 & 1.000 & 0.836 & 0.909 & 0.000 \\
+80-48-62-1(1) & 12 & 0.857 & 0.766 & 0.000 & 0.200 \\
+80-48-69-4 & 2 & 0.667 & 0.669 & --- & 0.571 \\
+80-48-72-2 & 10 & 0.952 & 0.801 & 0.889 & 0.000 \\
+80-48-73-1 & 20 & 0.606 & 0.765 & 0.911 & 0.400 \\
+\midrule
+Aggregate & 66 & 0.852 & 0.800 & 0.677 & 0.286 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~1 reports per-page agreement scores. The per-page breakdown reveals that Ignore-region agreement varies substantially by page (0.000--0.571), consistent with the observation that ambiguous artifact boundaries are the primary source of annotation disagreement. Text-column agreement is consistently high on pages with clear column boundaries (F1 $\ge$ 0.857 for three of five pages), while the lowest box F1 (0.606 on page 80-48-73-1) reflects a page with irregular short columns and fragments that the two annotators interpreted differently.
+
+\section{Supplementary Transfer Baselines}
+
+\begin{table}[t]
+\centering
+\scriptsize\setlength{\tabcolsep}{3pt}
+\caption{Transfer-detector baselines on the original 11-page test split under the same validation-selected threshold protocol. These diagnostic results suggest that off-the-shelf modern document-layout priors transfer poorly to sparse vertical handwritten archive columns without stronger domain adaptation.}
+\begin{tabular}{lccccc}
+\toprule
+Method & Prec. & Rec. & F1 & Mean IoU & RO Acc. \\
+\midrule
+RT-DETR-L + rotation-aware order & 0.032 & 0.270 & 0.058 & 0.632 & 0.847 \\
+DocLayout-YOLO + rotation-aware order & 0.046 & 0.031 & 0.037 & 0.572 & 0.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both RT-DETR-L and DocLayout-YOLO were fine-tuned for 5 epochs under the same train/validation/test split used for YOLOv8n. Because their training budgets are shorter than YOLOv8n (50 epochs) and their pretraining domains are dominated by modern printed document layouts, readers should interpret these results as diagnostic evidence of non-trivial domain transfer rather than as definitive model rankings. A fair-budget retraining comparison is left to future work.
+
+\section{Strict-Localization Comparison}
+
+\begin{table}[t]
+\centering
+\scriptsize\setlength{\tabcolsep}{3pt}
+\caption{Strict-localization comparison on the original 11-page test split at IoU@0.75. The stricter threshold penalizes boundary errors more heavily.}
+\begin{tabular}{lccccc}
+\toprule
+Method & Prec. & Rec. & F1 & Mean IoU & RO Acc. \\
+\midrule
+Heuristic column extraction & 0.322 & 0.447 & 0.375 & 0.901 & 1.000 \\
+YOLOv8n + rotation-aware order & 0.579 & 0.434 & 0.496 & 0.826 & 1.000 \\
+Faster R-CNN MobileNet + rotation-aware order & 0.352 & 0.289 & 0.318 & 0.828 & 1.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Inference-Size Sensitivity}
+
+\begin{table}[t]
+\centering
+\scriptsize\setlength{\tabcolsep}{3pt}
+\caption{YOLOv8n inference-only image-size sensitivity on the original 11-page test split. The model is trained at image size 960; inference is run at the listed sizes without retraining.}
+\begin{tabular}{lccccc}
+\toprule
+Inference size & Prec. & Rec. & F1 & Mean IoU & RO Acc. \\
+\midrule
+640 & 0.898 & 0.579 & 0.704 & 0.830 & 0.900 \\
+960 & 0.956 & 0.717 & 0.820 & 0.770 & 0.900 \\
+1280 & 0.965 & 0.737 & 0.836 & 0.753 & 0.900 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~4 reports inference-only sensitivity without retraining. Higher inference resolution improves recall at the cost of slower throughput. Note that these values are obtained by running the same 960-trained checkpoint at different test resolutions; full retraining at each image size is recommended before drawing training-configuration conclusions and is left to future work.
+
+\section{Multi-Scale Training Ablation}
+
+\begin{table}[t]
+\centering
+\scriptsize\setlength{\tabcolsep}{3pt}
+\caption{YOLOv8n retrained from scratch at three image sizes (50 epochs each) on the 43-page training set, evaluated on the expanded 54-page test set. Thresholds selected by validation F1.}
+\begin{tabular}{lccccc}
+\toprule
+Training image size & Prec. & Rec. & F1 & Mean IoU & RO Acc. \\
+\midrule
+640 & 0.898 & 0.852 & 0.875 & 0.768 & 0.997 \\
+960 & 0.902 & 0.875 & 0.888 & 0.770 & 0.997 \\
+1280 & 0.931 & 0.813 & 0.868 & 0.767 & 0.997 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~8 reports the effect of retraining YOLOv8n from scratch at three different image sizes with the same 50-epoch budget. Image size 960 achieves the best F1 (0.888), confirming the parameter choice used in the main manuscript. Image size 640 achieves identical F1 (0.875) with a lower threshold (0.20 vs.\ 0.15 for 960), while 1280 achieves the highest precision (0.931) but lower recall (0.813), consistent with the observation that higher-resolution training encourages more conservative detection. Unlike the inference-only sensitivity table (Table~4), these models were fully retrained at each image size, providing a more reliable picture of the resolution--performance trade-off.
+
+\section{Training-Set Size Scaling}
+
+\begin{table}[t]
+\centering
+\scriptsize\setlength{\tabcolsep}{3pt}
+\caption{YOLOv8n project-level test performance on the original 11-page test split with different numbers of annotated training pages.}
+\begin{tabular}{lccccc}
+\toprule
+Training pages & Test Prec. & Test Rec. & Test F1 & Mean IoU & RO Acc. \\
+\midrule
+7 & 0.843 & 0.388 & 0.532 & 0.719 & 1.000 \\
+20 & 0.875 & 0.691 & 0.772 & 0.748 & 0.900 \\
+43 & 0.956 & 0.717 & 0.820 & 0.770 & 0.900 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Column-Aware Post-Processing Diagnostic}
+
+\begin{table}[t]
+\centering
+\scriptsize\setlength{\tabcolsep}{3pt}
+\caption{Diagnostic column-aware YOLO post-processing on the original 11-page test split.}
+\begin{tabular}{lcccccc}
+\toprule
+Setting & Split & Prec. & Rec. & F1 & Mean IoU & RO Acc. \\
+\midrule
+Main YOLO threshold 0.35 & test & 0.956 & 0.717 & 0.820 & 0.770 & 0.900 \\
+Recall-oriented threshold 0.30 & test & 0.937 & 0.776 & 0.849 & 0.761 & 0.818 \\
+Column-aware prior filter & val & 0.929 & 0.791 & 0.854 & 0.779 & 0.875 \\
+Column-aware prior filter & test & 0.949 & 0.730 & 0.825 & 0.760 & 0.818 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Ablation of Ignore-Region Filtering and Rotation-Aware Ordering}
+
+\begin{table}[t]
+\centering
+\scriptsize\setlength{\tabcolsep}{3pt}
+\caption{Ablation of ignore-region filtering and rotation-aware reading order at score threshold 0.35 on the original 11-page test split.}
+\begin{tabular}{lcccccc}
+\toprule
+Configuration & Prec. & Rec. & F1 & RO Acc. & FP/FN & Removed \\
+\midrule
+Full: ignore + rotation-aware order & 0.956 & 0.717 & 0.820 & 0.900 & 5 / 43 & 0 \\
+w/o rotation-aware order & 0.956 & 0.717 & 0.820 & 1.000 & 5 / 43 & 0 \\
+w/o ignore filtering & 0.956 & 0.717 & 0.820 & 0.900 & 5 / 43 & 0 \\
+w/o both & 0.956 & 0.717 & 0.820 & 1.000 & 5 / 43 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Runtime Comparison}
+
+\begin{table}[t]
+\centering
+\scriptsize\setlength{\tabcolsep}{3pt}
+\caption{Local CPU runtime on the original 11-page test split.}
+\begin{tabular}{lccc}
+\toprule
+Method & Device & Mean s/page & Median s/page \\
+\midrule
+Heuristic column extraction & CPU & 1.843 & 1.729 \\
+YOLOv8n + rotation-aware order & CPU & 0.193 & 0.196 \\
+Faster R-CNN MobileNet + rotation-aware order & CPU & 0.168 & 0.162 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}
