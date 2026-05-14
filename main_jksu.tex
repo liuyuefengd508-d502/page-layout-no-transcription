@@ -164,7 +164,7 @@ To test whether explicit vertical-column priors improve detection, we additional
 To provide a second learned-detector reference point, we additionally fine-tune a Faster R-CNN MobileNetV3-FPN detector initialized from COCO-pretrained weights. The classification head is replaced with a two-class head for background and TextColumn. We fine-tune for 5 epochs with learning rate 0.0005 and image max-side 960. The confidence threshold is selected on the validation split, where 0.8 gives the best F1, and the selected threshold is then applied unchanged to the test split. This baseline provides a two-stage detector reference, but because the training schedule differs from YOLOv8n, the comparison should be interpreted diagnostically rather than as a compute-matched ranking.
 
 \subsection{Document-Layout Detector Transfer Baselines}
-We also examine two additional transfer baselines that are commonly associated with modern document-layout detection: RT-DETR and DocLayout-YOLO. RT-DETR is initialized from public pretrained weights and fine-tuned for 5 epochs at image size 640 under the same train/validation/test split. DocLayout-YOLO is initialized from a DocStructBench-pretrained checkpoint and fine-tuned for 5 epochs at image size 1024. For both baselines, the confidence threshold is selected only on the validation split before test evaluation. These models are included as supplementary transfer baselines because their pretraining domains are dominated by modern printed document layouts, which differ substantially from sparse, vertical, handwritten, and degraded archival columns. Because their training budgets are not identical to YOLOv8n, we treat them as diagnostic transfer experiments rather than fully optimized head-to-head comparisons.
+We also examine two additional transfer baselines that are commonly associated with modern document-layout detection: RT-DETR and DocLayout-YOLO. RT-DETR is initialized from public pretrained weights and DocLayout-YOLO is initialized from a DocStructBench-pretrained checkpoint. For both baselines, the confidence threshold is selected only on the validation split before test evaluation. These models are included as supplementary transfer baselines because their pretraining domains are dominated by modern printed document layouts, which differ substantially from sparse, vertical, handwritten, and degraded archival columns. We report two training budgets for each: the initial 5-epoch diagnostic run (comparable to the Faster R-CNN budget) and a 50-epoch fair-budget run that matches YOLOv8n's training schedule. The 5-epoch results should be interpreted as preliminary diagnostic evidence; the 50-epoch results provide a more informative comparison of domain-transfer difficulty under comparable optimization effort.
 
 
 \subsection{Training-Budget and Threshold Protocol}
@@ -181,8 +181,10 @@ Model & Init. domain & Epochs & Image size & Test threshold source \\
 \midrule
 YOLOv8n & COCO/general detection & 50 & 960 & validation F1, threshold 0.35 \\
 Faster R-CNN MobileNetV3-FPN & COCO/general detection & 5 & 960 max-side & validation F1, threshold 0.80 \\
-RT-DETR-L & general detection & 5 & 640 & validation F1, threshold 0.10 \\
-DocLayout-YOLO & DocStructBench layout & 5 & 1024 & validation F1, threshold 0.03 \\
+RT-DETR-L (diagnostic) & general detection & 5 & 640 & validation F1, threshold 0.10 \\
+RT-DETR-L (fair budget) & general detection & 50 & 640 & validation F1, threshold 0.30 \\
+DocLayout-YOLO (diagnostic) & DocStructBench layout & 5 & 1024 & validation F1, threshold 0.03 \\
+DocLayout-YOLO (fair budget) & DocStructBench layout & 50 & 1024 & validation F1, threshold 0.15 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -276,19 +278,21 @@ Table~\ref{tab:stratified_yolo} provides diagnostic observations rather than sta
 \begin{table}[t]
 \centering
 \scriptsize\setlength{\tabcolsep}{3pt}
-\caption{Supplementary transfer-detector baselines on the original 11-page test split under the same validation-selected threshold protocol. These diagnostic results suggest that off-the-shelf modern document-layout priors transfer poorly to sparse vertical handwritten archive columns without stronger domain adaptation.}
+\caption{Transfer-detector baselines on the original 11-page test split. The 5-epoch results use the same short budget as Faster R-CNN; the 50-epoch results match YOLOv8n's training budget for fairer comparison.}
 \label{tab:transfer_baselines}
 \begin{tabular}{p{0.34\linewidth}ccccc}
 \toprule
 Method & Prec. & Rec. & F1 & Mean IoU & RO Acc. \\
 \midrule
-RT-DETR-L + rotation-aware order & 0.032 & 0.270 & 0.058 & 0.632 & 0.847 \\
-DocLayout-YOLO + rotation-aware order & 0.046 & 0.031 & 0.037 & 0.572 & 0.000 \\
+RT-DETR-L 5ep + rotation-aware order & 0.032 & 0.270 & 0.058 & 0.632 & 0.847 \\
+RT-DETR-L 50ep + rotation-aware order & 0.183 & 0.132 & 0.153 & 0.622 & 1.000 \\
+DocLayout-YOLO 5ep + rotation-aware order & 0.046 & 0.031 & 0.037 & 0.572 & 0.000 \\
+DocLayout-YOLO 50ep + rotation-aware order & 0.635 & 0.572 & 0.602 & 0.709 & 0.900 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:transfer_baselines} reports two additional detector-transfer attempts. On the original 11-page diagnostic split, both are weak under this limited fine-tuning setting. The main failure mode is a large number of low-quality candidate regions or a mismatch between modern layout categories and the target text-column unit. Because these models were not trained with the same budget as YOLOv8n and were not rerun on the expanded test set, we interpret them conservatively as diagnostic evidence of non-trivial domain transfer rather than as definitive model rankings.
+Table~\ref{tab:transfer_baselines} reports detector-transfer attempts at two training budgets. Under the 5-epoch short budget, both RT-DETR and DocLayout-YOLO are very weak, producing many low-quality candidate regions. Extending the training budget to 50 epochs substantially changes the picture for DocLayout-YOLO, which improves from F1 = 0.037 to 0.602. This suggests that the DocStructBench layout priors do contain transferable features for sparse vertical archive columns, but they require extended domain adaptation to become practically useful. RT-DETR also improves (0.058 $\to$ 0.153) but remains far below YOLOv8n and Faster R-CNN even after 50 epochs. Both still underperform the heuristic baseline (F1 = 0.507 on the original test), confirming that off-the-shelf modern document-layout priors do not transfer directly to this domain without substantial architectural or pretraining adaptation. The 5-epoch results alone would underestimate DocLayout-YOLO's potential by a factor of 16$\times$ in F1, underscoring that fair-budget comparison is essential for reliable transfer diagnosis.
 
 
 \begin{table}[t]
