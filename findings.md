@@ -37,3 +37,29 @@
 ## Original-test diagnostics 统一 - 2026-05-13
 - 主结果现在以 expanded 54-page test 为准。
 - 原 11-page test 中的 stratified、transfer、IoU@0.75、AP、train-size、column-aware、ablation、runtime 均保留为诊断分析，并在 caption/text 中明确 original 11-page 或 diagnostic。
+
+## Phase 1 最终审计与修正 - 2026-05-14
+
+### 1A. main_jksu.tex 数值交叉验证
+- 所有 expanded 54-page 表格数值与 findings.md 一致。
+- 摘要 0.722/0.875/0.866 匹配 expanded 测试集。
+- bootstrap CI 表格已使用 expanded 测试值。
+- imgsz_ablation 表已从主稿件移除（不存在于 main_jksu.tex）。
+- column_aware_diag 表的文本描述已调整为诊断语气。
+
+### 1B. main.tex 和 main_prl.tex 过期数值修复
+- main.tex 摘要：Rule baseline 0.582 → 0.507（11 页测试口径）。
+- main.tex bootstrap CI：Rule [0.515,0.816] → [0.280,0.611]（来自 bootstrap_ci_summary_project16.json）。
+- main_prl.tex 摘要：Rule baseline 0.582 → 0.507。
+
+### 1C. supplementary_jksu.tex 重组
+- 标题更新为当前 "Pilot Study" 标题。
+- 新增 IAA 逐页明细表（来自 IAA_5page_per_page.csv）。
+- 新增推理尺寸敏感性表（从 main.tex 移入）。
+- 移除了训练协议和阈值敏感性表（在主稿件中已存在）。
+- 保留 transfer baselines、IoU@0.75、training-size scaling、column-aware、ablation、runtime 作为诊断实验参考。
+- pdflatex 编译通过（4 页，零警告）。
+
+### 1D. 编译验证
+- main_jksu.tex：两次 pdflatex 编译，19 页，无未解析引用，无警告。
+- supplementary_jksu.tex：编译通过，4 页。
