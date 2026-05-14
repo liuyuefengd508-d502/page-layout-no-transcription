@@ -1,0 +1,210 @@
+{
+  "project_id": 16,
+  "tasks": 62,
+  "latest_annotation_update": "2026-05-12 10:47:09.343351",
+  "reviewed_output": "/Users/liuyu/Desktop/mydocuments/codes/autoAIScienceforOCR/research_mongolian/page_level_ocr/page_level_annotations.project16_reviewed_20260512.json",
+  "backup": "/Users/liuyu/Desktop/mydocuments/codes/autoAIScienceforOCR/research_mongolian/page_level_ocr/page_level_annotations.before_project16_review_merge_20260512.bak",
+  "merged_annotation": "/Users/liuyu/Desktop/mydocuments/codes/autoAIScienceforOCR/research_mongolian/page_level_ocr/page_level_annotations.json",
+  "old_valid_text_columns": 931,
+  "old_ignore_regions": 153,
+  "new_valid_text_columns": 904,
+  "new_ignore_regions": 122,
+  "pages_with_count_changes": [
+    {
+      "page_id": "80-48-61-1",
+      "old_text": 26,
+      "old_ignore": 6,
+      "new_text": 18,
+      "new_ignore": 6
+    },
+    {
+      "page_id": "80-48-66-1(1)",
+      "old_text": 12,
+      "old_ignore": 5,
+      "new_text": 13,
+      "new_ignore": 4
+    },
+    {
+      "page_id": "80-48-70-1",
+      "old_text": 13,
+      "old_ignore": 7,
+      "new_text": 13,
+      "new_ignore": 6
+    },
+    {
+      "page_id": "80-48-72-2",
+      "old_text": 10,
+      "old_ignore": 7,
+      "new_text": 11,
+      "new_ignore": 6
+    },
+    {
+      "page_id": "80-48-72-5",
+      "old_text": 16,
+      "old_ignore": 2,
+      "new_text": 17,
+      "new_ignore": 1
+    },
+    {
+      "page_id": "80-48-73-1",
+      "old_text": 20,
+      "old_ignore": 6,
+      "new_text": 14,
+      "new_ignore": 5
+    },
+    {
+      "page_id": "80-48-65-1(2)",
+      "old_text": 6,
+      "old_ignore": 9,
+      "new_text": 17,
+      "new_ignore": 3
+    },
+    {
+      "page_id": "80-48-74-2",
+      "old_text": 22,
+      "old_ignore": 0,
+      "new_text": 12,
+      "new_ignore": 0
+    },
+    {
+      "page_id": "80-48-77-1",
+      "old_text": 10,
+      "old_ignore": 4,
+      "new_text": 17,
+      "new_ignore": 2
+    },
+    {
+      "page_id": "80-48-78-3",
+      "old_text": 27,
+      "old_ignore": 0,
+      "new_text": 25,
+      "new_ignore": 0
+    },
+    {
+      "page_id": "80-48-80-3",
+      "old_text": 4,
+      "old_ignore": 3,
+      "new_text": 5,
+      "new_ignore": 2
+    },
+    {
+      "page_id": "80-48-61-2",
+      "old_text": 18,
+      "old_ignore": 3,
+      "new_text": 19,
+      "new_ignore": 2
+    },
+    {
+      "page_id": "80-48-62-1(2)",
+      "old_text": 12,
+      "old_ignore": 2,
+      "new_text": 13,
+      "new_ignore": 1
+    },
+    {
+      "page_id": "80-48-63-1",
+      "old_text": 17,
+      "old_ignore": 3,
+      "new_text": 15,
+      "new_ignore": 2
+    },
+    {
+      "page_id": "80-48-64-1(1)",
+      "old_text": 21,
+      "old_ignore": 2,
+      "new_text": 19,
+      "new_ignore": 1
+    },
+    {
+      "page_id": "80-48-67-1",
+      "old_text": 14,
+      "old_ignore": 9,
+      "new_text": 15,
+      "new_ignore": 8
+    },
+    {
+      "page_id": "80-48-67-3",
+      "old_text": 20,
+      "old_ignore": 5,
+      "new_text": 21,
+      "new_ignore": 4
+    },
+    {
+      "page_id": "80-48-67-4",
+      "old_text": 20,
+      "old_ignore": 5,
+      "new_text": 21,
+      "new_ignore": 4
+    },
+    {
+      "page_id": "80-48-67-5",
+      "old_text": 21,
+      "old_ignore": 3,
+      "new_text": 22,
+      "new_ignore": 2
+    },
+    {
+      "page_id": "80-48-68-1",
+      "old_text": 17,
+      "old_ignore": 8,
+      "new_text": 19,
+      "new_ignore": 5
+    },
+    {
+      "page_id": "80-48-69-1",
+      "old_text": 13,
+      "old_ignore": 7,
+      "new_text": 12,
+      "new_ignore": 6
+    },
+    {
+      "page_id": "80-48-69-2",
+      "old_text": 13,
+      "old_ignore": 2,
+      "new_text": 13,
+      "new_ignore": 1
+    },
+    {
+      "page_id": "80-48-71-1",
+      "old_text": 18,
+      "old_ignore": 3,
+      "new_text": 16,
+      "new_ignore": 3
+    },
+    {
+      "page_id": "80-48-72-1",
+      "old_text": 21,
+      "old_ignore": 0,
+      "new_text": 12,
+      "new_ignore": 0
+    },
+    {
+      "page_id": "80-48-76-1",
+      "old_text": 20,
+      "old_ignore": 2,
+      "new_text": 21,
+      "new_ignore": 1
+    },
+    {
+      "page_id": "80-48-76-3",
+      "old_text": 21,
+      "old_ignore": 1,
+      "new_text": 12,
+      "new_ignore": 1
+    },
+    {
+      "page_id": "80-48-78-1",
+      "old_text": 23,
+      "old_ignore": 0,
+      "new_text": 24,
+      "new_ignore": 0
+    },
+    {
+      "page_id": "80-48-80-1",
+      "old_text": 26,
+      "old_ignore": 5,
+      "new_text": 18,
+      "new_ignore": 2
+    }
+  ]
+}

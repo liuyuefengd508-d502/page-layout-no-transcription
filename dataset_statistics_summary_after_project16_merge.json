@@ -1,0 +1,43 @@
+{
+  "pages": 62,
+  "valid_text_columns": 904,
+  "ignore_regions": 122,
+  "rotated_or_corrected_pages": 16,
+  "pages_with_ignore": 38,
+  "page_width_px": {
+    "min": 4830,
+    "max": 7396,
+    "mean": 6618.451612903225,
+    "median": 6794.0
+  },
+  "page_height_px": {
+    "min": 4830,
+    "max": 9594,
+    "mean": 5698.258064516129,
+    "median": 4830.0
+  },
+  "columns_per_page": {
+    "min": 1,
+    "max": 25,
+    "mean": 14.580645161290322,
+    "median": 15.0
+  },
+  "ignore_regions_per_page": {
+    "min": 0,
+    "max": 8,
+    "mean": 1.967741935483871,
+    "median": 1.5
+  },
+  "column_width_px": {
+    "min": 109,
+    "max": 497,
+    "mean": 263.37278761061947,
+    "median": 256.0
+  },
+  "column_height_px": {
+    "min": 222,
+    "max": 7883,
+    "mean": 3108.179203539823,
+    "median": 3357.5
+  }
+}

@@ -1,0 +1,159 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{geometry}
+\geometry{margin=1in}
+\begin{document}
+\title{Supplementary Material for ``Pilot-Scale Text Column Detection and Reading-Order Recovery for Traditional Mongolian Historical Archives''}
+\author{Lanying Liang \quad Yuefeng Liu$^*$}
+\date{}
+\maketitle
+
+\section{Inter-Annotator Agreement}
+\begin{table}[h]
+\centering
+\caption{Inter-annotator agreement on the 5-page independent subset.}
+\begin{tabular}{lc}
+\toprule
+Metric & Value \\
+\midrule
+Box precision@0.5 & 0.929 \\
+Box recall@0.5 & 0.788 \\
+Box F1@0.5 & 0.852 \\
+Mean matched IoU & 0.800 \\
+Reading-order pairwise agreement & 0.677 \\
+Ignore F1@0.5 & 0.286 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Training and Threshold Protocol}
+\begin{table}[h]
+\centering
+\caption{Training-budget and threshold-selection protocol.}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccl}
+\toprule
+Model & Init. domain & Epochs & Image size & Test threshold source \\
+\midrule
+YOLOv8n & COCO/general detection & 50 & 960 & validation F1, threshold 0.35 \\
+Faster R-CNN MobileNetV3-FPN & COCO/general detection & 5 & 960 max-side & validation F1, threshold 0.80 \\
+RT-DETR-L & general detection & 5 & 640 & validation F1, threshold 0.10 \\
+DocLayout-YOLO & DocStructBench layout & 5 & 1024 & validation F1, threshold 0.03 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{YOLOv8n validation threshold sensitivity.}
+\begin{tabular}{lccc}
+\toprule
+Threshold & Val Prec. & Val Rec. & Val F1 \\
+\midrule
+0.25 & 0.746 & 0.787 & 0.766 \\
+0.30 & 0.812 & 0.759 & 0.785 \\
+0.35 & 0.876 & 0.722 & 0.792 \\
+0.40 & 0.873 & 0.639 & 0.738 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Supplementary Baselines and Diagnostics}
+\begin{table}[h]
+\centering
+\caption{Transfer-detector baselines under validation-selected thresholds.}
+\begin{tabular}{lccccc}
+\toprule
+Method & Prec. & Rec. & F1 & Mean IoU & RO Acc. \\
+\midrule
+RT-DETR-L + rotation-aware order & 0.032 & 0.270 & 0.058 & 0.632 & 0.847 \\
+DocLayout-YOLO + rotation-aware order & 0.046 & 0.031 & 0.037 & 0.572 & 0.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Strict-localization comparison at IoU@0.75.}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Method & Prec. & Rec. & F1 & Mean IoU & RO Acc. \\
+\midrule
+Heuristic column extraction & 0.500 & 0.374 & 0.428 & 0.908 & 1.000 \\
+YOLOv8n + rotation-aware order & 0.559 & 0.380 & 0.453 & 0.826 & 0.925 \\
+Faster R-CNN MobileNet + rotation-aware order & 0.355 & 0.264 & 0.303 & 0.830 & 0.942 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{YOLOv8n performance with different numbers of annotated training pages.}
+\begin{tabular}{lcccc}
+\toprule
+Training pages & Test Prec. & Test Rec. & Test mAP50 & Test mAP50--95 \\
+\midrule
+7 & 0.592 & 0.453 & 0.540 & 0.215 \\
+20 & 0.806 & 0.712 & 0.810 & 0.355 \\
+43 & 0.818 & 0.801 & 0.825 & 0.414 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Diagnostic column-aware YOLO post-processing.}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Setting & Split & Prec. & Rec. & F1 & Mean IoU & RO Acc. \\
+\midrule
+Main YOLO threshold 0.35 & test & 0.919 & 0.626 & 0.745 & 0.767 & 0.920 \\
+Recall-oriented threshold 0.30 & test & 0.894 & 0.675 & 0.769 & 0.760 & 0.830 \\
+Column-aware prior filter & val & 0.940 & 0.722 & 0.817 & 0.784 & 0.821 \\
+Column-aware prior filter & test & 0.919 & 0.558 & 0.695 & 0.761 & 0.965 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\section{Ablation and Runtime}
+\begin{table}[h]
+\centering
+\caption{Ablation of ignore-region filtering and rotation-aware reading order at score threshold 0.35.}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Configuration & Prec. & Rec. & F1 & RO Acc. & FP/FN & Removed \\
+\midrule
+Full: ignore + rotation-aware order & 0.919 & 0.626 & 0.745 & 0.920 & 9 / 61 & 3 \\
+w/o rotation-aware order & 0.919 & 0.626 & 0.745 & 0.820 & 9 / 61 & 3 \\
+w/o ignore filtering & 0.895 & 0.626 & 0.736 & 0.920 & 12 / 61 & 0 \\
+w/o both & 0.895 & 0.626 & 0.736 & 0.820 & 12 / 61 & 0 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Runtime on the 11-page test split under local CPU execution.}
+\begin{tabular}{lccc}
+\toprule
+Method & Device & Mean s/page & Median s/page \\
+\midrule
+Heuristic column extraction & CPU & 1.843 & 1.729 \\
+YOLOv8n + rotation-aware order & CPU & 0.193 & 0.196 \\
+Faster R-CNN MobileNet + rotation-aware order & CPU & 0.168 & 0.162 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}

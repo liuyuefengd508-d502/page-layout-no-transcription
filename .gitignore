@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# LaTeX 编译产物
+*.aux
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+*.toc
+*.lof
+*.lot
+
+# PDF（编译输出，源码在 tex 中）
+# *.pdf
+
+# 备份与临时文件
+*.bak
+*.swp
+*~
