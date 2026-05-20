@@ -131,6 +131,8 @@ Training pages & Test Prec. & Test Rec. & Test F1 & Mean IoU & RO Acc. \\
 
 \section{Column-Aware Post-Processing Diagnostic}
 
+Table~6 evaluates a simple column-aware geometric filter that retains YOLO predictions satisfying validation-selected constraints on aspect ratio, relative height, and relative width. The column-aware filter improves validation F1 (0.854 vs.\ 0.792) but does not robustly dominate the main threshold on the test split (F1 0.825 vs.\ 0.820) and reduces reading-order accuracy (0.818 vs.\ 0.900). This trade-off, combined with the risk of overfitting geometric priors to the small validation set, motivates keeping the simple threshold as the main result.
+
 \begin{table}[t]
 \centering
 \scriptsize\setlength{\tabcolsep}{3pt}
@@ -149,6 +151,8 @@ Column-aware prior filter & test & 0.949 & 0.730 & 0.825 & 0.760 & 0.818 \\
 
 \section{Ablation of Ignore-Region Filtering and Rotation-Aware Ordering}
 
+Table~7 ablates two post-processing components on the original 11-page test split. Ignore-region filtering does not suppress any YOLO predictions on this test set (no prediction overlaps an Ignore region by $\geq$0.3 IoU), so detection F1 is unchanged. Rotation-aware ordering also leaves detection F1 unchanged; on this split, the simple x-sorted order happens to give slightly higher reading-order accuracy than the rotation-aware heuristic, reinforcing that the ordering rule is a transparent proxy rather than a fully solved component.
+
 \begin{table}[t]
 \centering
 \scriptsize\setlength{\tabcolsep}{3pt}
@@ -166,6 +170,8 @@ w/o both & 0.956 & 0.717 & 0.820 & 1.000 & 5 / 43 & 0 \\
 \end{table}
 
 \section{Runtime Comparison}
+
+Table~8 reports per-page inference time on the original 11-page test split measured on a local CPU (Mac M5 Pro). The rule-based pipeline is the slowest (1.84~s/page). The two learned detectors are faster and close to each other (0.17--0.19~s/page); these timings are implementation-specific and should not be interpreted as general speed rankings, because batching, preprocessing, and hardware can change the relative ordering.
 
 \begin{table}[t]
 \centering
