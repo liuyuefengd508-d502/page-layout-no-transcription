@@ -1,7 +1,5 @@
-# Highlights for Pattern Recognition Letters
-
-- A pilot-scale benchmark is introduced for traditional Mongolian archive layout analysis.
-- Text-column detection and reading-order recovery are evaluated without requiring transcripts.
-- YOLOv8n and Faster R-CNN substantially outperform heuristic column extraction.
-- A crop-export-ready interface is provided for future expert-transcribed OCR studies.
-- Limitations are explicitly reported, including zero full-page success on the current test split.
+- First page-level layout analysis protocol for handwritten traditional Mongolian historical archives.
+- Expanded 105-page dataset with 54-page test set and bootstrap-based uncertainty quantification.
+- YOLOv8n achieves F1 0.875 vs. heuristic 0.722; DocLayout-YOLO improves from F1 0.037 to 0.602 with fair-budget retraining.
+- Pairwise reading-order accuracy evaluated on matched columns with explicit discussion of metric limitations.
+- Crop-export-ready interface provided; CER/WER not reported due to unavailable expert transcripts.
