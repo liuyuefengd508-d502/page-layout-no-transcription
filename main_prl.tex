@@ -1,26 +1,36 @@
-\documentclass[12pt]{article}
+\documentclass[5p,times,twocolumn]{elsarticle}
 
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{url}
 \usepackage{amsmath}
-\usepackage{geometry}
-\geometry{margin=1in}
+
+\journal{Pattern Recognition Letters}
 
 \begin{document}
 
+\begin{frontmatter}
+
 \title{Pilot-Scale Text Column Detection and Reading-Order Recovery for Traditional Mongolian Historical Archives}
 
-\author{\parbox{0.95\textwidth}{\centering Lanying Liang$^{1}$ \quad Yuefeng Liu$^{2,*}$\\[0.4em]\small $^{1}$Archives, Inner Mongolia University of Science and Technology,\\\small Baotou, 014010, Inner Mongolia, China\\\small $^{2}$School of Digital and Intelligent Industry (School of Cyber Science and Technology),\\\small Inner Mongolia University of Science and Technology, Baotou, 014010, Inner Mongolia, China\\\small *Corresponding author: liuyuefeng@imust.edu.cn; Lanying Liang: 389647973@qq.com}}
-\date{}
-\maketitle
+\author[1]{Lanying Liang}
+\author[2]{Yuefeng Liu\corref{corresponding}}
+\cortext[corresponding]{Corresponding author: liuyuefeng@imust.edu.cn}
+\address[1]{Archives, Inner Mongolia University of Science and Technology, Baotou, 014010, Inner Mongolia, China}
+\address[2]{School of Digital and Intelligent Industry (School of Cyber Science and Technology), Inner Mongolia University of Science and Technology, Baotou, 014010, Inner Mongolia, China}
+\ead[1]{lianglanying@imust.edu.cn}
+\ead[2]{liuyuefeng@imust.edu.cn}
 
 \begin{abstract}
 Traditional Mongolian historical archives pose a challenging page-level document analysis problem because the script is vertically written, cursive, low-resource, and frequently degraded by aging paper, ink variation, seals, scanning rotation, and heterogeneous archive sources. Since expert transcription of handwritten traditional Mongolian columns is expensive and currently unavailable, this concise study focuses on an upstream stage for archival OCR: text-column detection and reading-order recovery. We construct a page-level annotation protocol with text-column bounding boxes, ignored noise regions, orientation metadata, and reading order. We compare classical rule-based extraction, YOLOv8n, and a COCO-pretrained Faster R-CNN MobileNet detector with a rotation-aware ordering strategy. On an expanded 54-page test set, YOLOv8n improves the project-level IoU@0.5 F1 score from 0.722 for the heuristic baseline to 0.875 and achieves 0.887 reading-order accuracy on matched columns, while Faster R-CNN reaches 0.866 F1. However, full-page success remains low (0.074 for YOLOv8n), so the system should be interpreted as a candidate crop generator rather than a fully automatic solution. We also conduct fair-budget retraining of transfer baselines (RT-DETR-L, DocLayout-YOLO) and find that DocLayout-YOLO improves from F1 = 0.037 (5 epochs) to 0.602 (50 epochs), demonstrating that modern layout priors can transfer with sufficient domain adaptation. We provide a crop-export-ready interface, but do not report CER/WER because expert column-level transcripts are not yet available.
 \end{abstract}
 
-\noindent\textbf{Keywords:} Historical document analysis; Traditional Mongolian archives; Text column detection; Reading order recovery; Low-resource document analysis
+\begin{keyword}
+Historical document analysis \sep Traditional Mongolian archives \sep Text column detection \sep Reading order recovery \sep Low-resource document analysis
+\end{keyword}
+
+\end{frontmatter}
 
 \section{Introduction}
 Full-page recognition of traditional Mongolian historical archives requires more than a recognizer trained on isolated text lines. Pages often contain many vertical handwritten columns, irregular spacing, red seals, page borders, paper stains, and inconsistent scan orientations. If columns are not localized and ordered reliably, downstream OCR modules receive incomplete or misordered crops.
@@ -29,10 +39,10 @@ In the current project stage, expert transcription of handwritten traditional Mo
 
 Our contributions are threefold. First, we define a page-level annotation protocol for traditional Mongolian archives, including text-column boxes, ignore regions, orientation, and reading order, with refined Ignore subtypes for real-world archival artifacts. Second, we provide a pilot-scale evaluation of rule-based and learning-based column detection under a unified matching protocol, with bootstrap confidence intervals and fair-budget transfer baseline comparison. Third, we implement a crop-export-ready interface while clearly separating layout evaluation from future transcription-based OCR evaluation. The work is positioned as an application-oriented diagnostic study rather than a new detector architecture.
 
-\begin{figure}[t]
+\begin{figure}[!ht]
 \centering
-\includegraphics[width=\linewidth]{figures/page_layout_pipeline_overview.jpg}
-\caption{Overview of the page-level layout-analysis pipeline. The current study evaluates text-column detection and reading-order recovery without requiring expert text transcription.}
+\includegraphics[width=\columnwidth]{figures/page_layout_pipeline_overview.jpg}
+\caption{Overview of the page-level layout-analysis pipeline.}
 \label{fig:pipeline}
 \end{figure}
 
@@ -46,13 +56,13 @@ Our contributions are threefold. First, we define a page-level annotation protoc
 \section{Dataset and Annotation Protocol}
 The dataset contains 105 valid traditional Mongolian archive pages after removing Chinese handwritten archive pages and correcting abnormal scan orientation. The split contains 43 training pages, 8 validation pages, an original 11-page test split, and a 43-page test-expansion split, giving an expanded 54-page test set. The annotations include 1538 valid text-column boxes and 199 ignored regions.
 
-\begin{table}[t]
+\begin{table}[!ht]
 \centering
 \caption{Page-level annotation statistics.}
 \label{tab:data_stats}
 \begin{tabular}{lrrr}
 \toprule
-Split & Pages & TextColumn boxes & Ignored boxes \\
+Split & Pages & Columns & Ignored \\
 \midrule
 train & 43 & 637 & 67 \\
 val & 8 & 115 & 10 \\
@@ -64,206 +74,182 @@ total & 105 & 1538 & 199 \\
 \end{tabular}
 \end{table}
 
-\begin{table}[t]
-\centering
-\caption{Dataset distribution statistics over the 105-page corpus.}
-\label{tab:dataset_distribution}
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{lrrrr}
-\toprule
-Quantity & Min & Max & Mean & Median \\
-\midrule
-Page width & 4830 & 7594 & 6728.1 & 6794 \\
-Page height & 4830 & 9594 & 5703.5 & 4830 \\
-Text columns per page & 1 & 25 & 14.6 & 16 \\
-Ignore regions per page & 0 & 8 & 1.9 & 2 \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
+Each non-ignored text column is annotated with a bounding box and reading-order index. Ignored regions cover six subtypes: seals or stamps, stains and background noise, page borders or scanning edges, non-target-language regions, ambiguous fragments, and unseparable artifact--text overlaps. A 5-page independent IAA subset gives text-column box F1@0.5 of 0.852 and mean matched IoU of 0.800; reading-order agreement is lower at 0.677, and Ignore F1@0.5 of 0.286 is acknowledged as a limitation.
 
-Each non-ignored text column is annotated with a bounding box and reading-order index. Ignored regions cover six subtypes: seals or stamps, stains and background noise, page borders or scanning edges, non-target-language regions, ambiguous fragments, and unseparable artifact--text overlaps. A 5-page independent IAA subset gives text-column box F1@0.5 of 0.852 and mean matched IoU of 0.800; reading-order agreement is lower at 0.677, and Ignore F1@0.5 of 0.286 is acknowledged as a limitation. Pages originally horizontal or upside down are relabeled after rotation.
-
-\begin{figure}[t]
+\begin{figure}[!ht]
 \centering
-\includegraphics[width=0.78\linewidth]{figures/page_layout_annotation_example.jpg}
-\caption{Example of the annotation protocol. Green boxes indicate valid text columns with reading-order indices; gray boxes indicate ignored regions.}
+\includegraphics[width=\columnwidth]{figures/page_layout_annotation_example.jpg}
+\caption{Example of the annotation protocol. Green boxes indicate valid text columns; gray boxes indicate ignored regions.}
 \label{fig:annotation}
 \end{figure}
 
 \section{Method}
-\textbf{Rule-based baseline.} The heuristic baseline applies adaptive binarization, vertical ink-density projection, connected-component filtering, and width, height, and density constraints, followed by overlap merging and left-to-right order assignment. It is interpretable but sensitive to stains, faint ink, and over-merging. All thresholds are fixed before test evaluation.
+\textbf{Rule-based baseline.} The heuristic baseline applies adaptive binarization, vertical ink-density projection, connected-component filtering, and width, height, and density constraints, followed by overlap merging and left-to-right order assignment.
 
 \textbf{Learning-based detectors.} We train YOLOv8n~\cite{jocher2023yolov8} for 50 epochs with image size 960 and batch size 1, initialized from public weights. The confidence threshold 0.35 is selected only on the 8-page validation split. We also fine-tune a COCO-pretrained Faster R-CNN MobileNetV3-FPN detector for 5 epochs with max-side 960; threshold 0.80 is selected on validation.
 
-\textbf{Transfer baselines with fair-budget retraining.} RT-DETR-L and DocLayout-YOLO are included as diagnostic transfer experiments, each at two training budgets: 5 epochs (matching the Faster R-CNN budget) and 50 epochs (matching YOLOv8n). The 50-epoch retraining tests whether modern document-layout priors transfer to this domain under fair optimization effort. Both baselines use validation-selected thresholds.
+\textbf{Transfer baselines with fair-budget retraining.} RT-DETR-L and DocLayout-YOLO are included as diagnostic transfer experiments, each at two training budgets: 5 epochs (matching the Faster R-CNN budget) and 50 epochs (matching YOLOv8n). The 50-epoch retraining tests whether modern document-layout priors transfer to this domain under fair optimization effort.
 
-\textbf{Rotation-aware reading order.} For detections $b_i=(x_{1i},y_{1i},x_{2i},y_{2i})$, the column center is $c_i=(x_{1i}+x_{2i})/2$. Detections are sorted by $c_i$ ascending for ordinary pages and descending for pages relabeled after 90-degree rotation. We note that the pairwise reading-order metric is computed only on matched detection--ground-truth pairs, making it a proxy for the ordering module rather than a fully independent metric.
+\textbf{Rotation-aware reading order.} For detections $b_i=(x_{1i},y_{1i},x_{2i},y_{2i})$, the column center is $c_i=(x_{1i}+x_{2i})/2$. Detections are sorted by $c_i$ ascending for ordinary pages and descending for rotated pages. We note that the pairwise reading-order metric is computed only on matched detection--ground-truth pairs, making it a proxy for the ordering module rather than a fully independent metric.
 
-\textbf{Crop-export interface.} The pipeline exports oracle crops and detected crops for future OCR evaluation once reliable transcripts become available. No CER/WER is reported.
+\textbf{Crop-export interface.} The pipeline exports oracle crops and detected crops for future OCR evaluation. No CER/WER is reported.
 
 \section{Experiments}
 \subsection{Metrics}
-Column detection is evaluated with greedy IoU@0.5 matching. We report precision, recall, F1, mean matched IoU, and pairwise reading-order accuracy on matched columns. Predictions substantially overlapping ignored regions are not counted as false positives. We also report complete detection rate, full-page success rate, and page-level bootstrap 95\% confidence intervals (1000 samples). Complete detection requires zero false positives and false negatives per page; full-page success additionally requires perfect matched-pair reading order.
+Column detection is evaluated with greedy IoU@0.5 matching. We report precision, recall, F1, mean matched IoU, and pairwise reading-order accuracy on matched columns. Predictions substantially overlapping ignored regions are not counted as false positives. We also report complete detection rate, full-page success rate, and page-level bootstrap 95\% confidence intervals (1000 samples).
 
 \subsection{Main Results (Expanded 54-page test)}
-\begin{table}[t]
+\begin{table}[!ht]
 \centering
 \caption{Expanded 54-page test-set comparison under IoU@0.5 matching.}
 \label{tab:main_results}
 \begin{tabular}{lccccc}
 \toprule
-Method & Prec. & Rec. & F1 & Mean IoU & RO Acc. \\
+Method & Prec. & Rec. & F1 & mIoU & RO \\
 \midrule
-Heuristic column extraction & 0.694 & 0.753 & 0.722 & \textbf{0.881} & 0.882 \\
-YOLOv8n + rotation-aware order & \textbf{0.936} & \textbf{0.821} & \textbf{0.875} & 0.756 & \textbf{0.887} \\
-Faster R-CNN MobileNet + rotation-aware order & 0.924 & 0.816 & 0.866 & 0.744 & 0.870 \\
+Heuristic & 0.694 & 0.753 & 0.722 & \textbf{0.881} & 0.882 \\
+YOLOv8n & \textbf{0.936} & \textbf{0.821} & \textbf{0.875} & 0.756 & \textbf{0.887} \\
+FRCNN & 0.924 & 0.816 & 0.866 & 0.744 & 0.870 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:main_results} reports the three primary methods on the expanded 54-page test set (786 GT columns). Both learned detectors achieve substantially higher F1 than the heuristic baseline. YOLOv8n and Faster R-CNN are close in F1, with overlapping bootstrap intervals (Table~\ref{tab:strict_ci}), so this comparison should be interpreted diagnostically.
+Table~\ref{tab:main_results} reports results on the expanded 54-page test set (786 GT columns). Both learned detectors achieve substantially higher F1 than the heuristic baseline. YOLOv8n and Faster R-CNN are close in F1, with overlapping bootstrap intervals (Table~\ref{tab:strict_ci}).
 
-\begin{table}[t]
+\begin{table}[!ht]
 \centering
 \caption{Strict page-level metrics and bootstrap 95\% CI on the expanded 54-page test.}
 \label{tab:strict_ci}
-\begin{tabular}{lcccc}
+\begin{tabular}{lccc}
 \toprule
-Method & Complete det. & Full-page & F1 95\% CI \\
+Method & Complete & Full-page & F1 95\% CI \\
 \midrule
-Heuristic column extraction & 0.148 & 0.148 & [0.643, 0.800] \\
-YOLOv8n + rotation-aware order & 0.111 & 0.074 & [0.834, 0.906] \\
-Faster R-CNN MobileNet + rotation-aware order & 0.111 & 0.093 & [0.830, 0.897] \\
+Heuristic & 0.148 & 0.148 & [0.643,0.800] \\
+YOLOv8n & 0.111 & 0.074 & [0.834,0.906] \\
+FRCNN & 0.111 & 0.093 & [0.830,0.897] \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Full-page success remains low for all methods, because even one missed or extra column makes complete detection fail. The system should be interpreted as a candidate crop generator rather than a fully automatic OCR preprocessing solution.
+Full-page success remains low for all methods, because even one missed or extra column makes complete detection fail.
 
-\begin{figure}[h!]
+\begin{figure}[!ht]
 \centering
-\includegraphics[width=0.88\linewidth]{figures/page_layout_qualitative_failure_montage.jpg}
-\caption{Representative comparisons. Each row shows ground truth, rule-based predictions, and YOLOv8n predictions. Green denotes valid text columns, gray ignored regions, red rule-based detections, and blue YOLO detections.}
+\includegraphics[width=\columnwidth]{figures/page_layout_qualitative_failure_montage.jpg}
+\caption{Representative comparisons. Green: valid text columns, gray: ignored, red: rule-based, blue: YOLO.}
 \label{fig:qualitative}
 \end{figure}
 
-\subsection{Transfer Baseline Results (11-page original test)}
-\begin{table}[t]
+\subsection{Transfer Baseline Results}
+\begin{table}[!ht]
 \centering
-\caption{Transfer-detector baselines at two training budgets on the original 11-page test split.}
-\label{tab:transfer_baselines}
+\caption{Transfer baselines at two training budgets on the original 11-page test split.}
+\label{tab:transfer}
 \begin{tabular}{lccccc}
 \toprule
-Method & Prec. & Rec. & F1 & Mean IoU & RO Acc. \\
+Method & Prec. & Rec. & F1 & mIoU & RO \\
 \midrule
-RT-DETR-L 5ep & 0.032 & 0.270 & 0.058 & 0.632 & 0.847 \\
-RT-DETR-L 50ep & 0.183 & 0.132 & 0.153 & 0.622 & 1.000 \\
-DocLayout-YOLO 5ep & 0.046 & 0.031 & 0.037 & 0.572 & 0.000 \\
-DocLayout-YOLO 50ep & 0.635 & 0.572 & 0.602 & 0.709 & 0.900 \\
+RT-DETR 5ep & 0.032 & 0.270 & 0.058 & 0.632 & 0.847 \\
+RT-DETR 50ep & 0.183 & 0.132 & 0.153 & 0.622 & 1.000 \\
+DocLayout 5ep & 0.046 & 0.031 & 0.037 & 0.572 & 0.000 \\
+DocLayout 50ep & 0.635 & 0.572 & 0.602 & 0.709 & 0.900 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:transfer_baselines} reports transfer baselines at two training budgets on the original 11-page diagnostic split. The 50-epoch budget matches YOLOv8n's training schedule. DocLayout-YOLO improves from F1 = 0.037 to 0.602, a 16$\times$ increase, showing that DocStructBench priors contain transferable features that emerge with sufficient domain adaptation. RT-DETR-L also improves but remains far below competitive levels (F1 = 0.153). The 5-epoch results alone would significantly underestimate transfer potential. Due to computational resource limits, the fair-budget baselines have not been re-evaluated on the expanded test; this is planned for future work.
+Table~\ref{tab:transfer} reports transfer baselines at two budgets on the 11-page diagnostic split. DocLayout-YOLO improves from F1 = 0.037 to 0.602 (16$\times$), showing that DocStructBench priors contain transferable features with sufficient domain adaptation. RT-DETR-L improves but remains far below competitive levels (F1 = 0.153). Due to computational limits, fair-budget baselines have not been re-evaluated on the expanded test.
 
-\subsection{Stratified and Ablation Analysis}
-Table~\ref{tab:stratified} reports YOLOv8n stratified performance on the expanded 54-page test. Many-column pages achieve the best F1 (0.907), while few-column pages (4 pages, F1 = 0.720) and pages with Ignore regions (7 pages, F1 = 0.808) remain more challenging. The expanded stratification is more informative than the original 11-page diagnostic because subgroup sizes are larger.
+\subsection{Stratified Analysis}
+Table~\ref{tab:stratified} reports YOLOv8n stratified performance on the expanded 54-page test. Many-column pages achieve the best F1 (0.907), while few-column pages (F1 = 0.720) and pages with Ignore regions (F1 = 0.808) remain more challenging. The expanded stratification is more informative than the original 11-page diagnostic because subgroup sizes are larger.
 
-\begin{table}[t]
+\begin{table}[!ht]
 \centering
-\caption{Stratified YOLOv8n on the expanded 54-page test by column count and Ignore presence (threshold 0.35).}
+\caption{Stratified YOLOv8n on the expanded 54-page test.}
 \label{tab:stratified}
 \begin{tabular}{lcccc}
 \toprule
 Group & Pages & Prec. & Rec. & F1 \\
 \midrule
-Few columns ($\leq$5) & 4 & 0.900 & 0.600 & 0.720 \\
+Few ($\leq$5) & 4 & 0.900 & 0.600 & 0.720 \\
 Medium (6--15) & 22 & 0.869 & 0.727 & 0.791 \\
 Many ($>$15) & 28 & 0.936 & 0.880 & \textbf{0.907} \\
-With Ignore regions & 7 & 0.924 & 0.718 & 0.808 \\
+With Ignore & 7 & 0.924 & 0.718 & 0.808 \\
 No Ignore & 47 & 0.914 & 0.837 & 0.874 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Additional diagnostics (IoU@0.75, training-set scaling, threshold sensitivity, column-aware post-processing, ignore-region and rotation-order ablation, runtime, YOLOv8n multi-scale retraining at 640/960/1280) are provided in the supplementary material. The key finding from multi-scale retraining is that image size 960 yields the best test F1 (0.888), confirming the main parameter choice; image size 1280 achieves the highest precision (0.931) but lower recall (0.813).
+Additional diagnostics (IoU@0.75, training-set scaling, threshold sensitivity, column-aware post-processing, ignore-region and rotation-order ablation, runtime, YOLOv8n multi-scale retraining at 640/960/1280) are in the supplementary material. Multi-scale retraining confirms image size 960 yields the best test F1 (0.888).
 
 \section{Discussion and Limitations}
-The main value of this concise study is a realistic pilot-scale evaluation protocol for a low-resource archival layout problem, not a complete OCR system. The expanded 54-page test set reduces statistical uncertainty compared with the original 11-page test, but the dataset remains modest and bootstrap intervals should be interpreted as honest uncertainty estimates. All hyper-parameters---confidence thresholds, geometric priors, and ignore-region filtering thresholds---are selected on a validation split of only 8 pages, introducing potential overfitting to the validation distribution. Subgroup analyses remain diagnostic.
+The main value of this concise study is a realistic pilot-scale evaluation protocol for a low-resource archival layout problem, not a complete OCR system. The expanded 54-page test set reduces statistical uncertainty compared with the original 11-page test, but the dataset remains modest and bootstrap intervals should be interpreted as honest uncertainty estimates. All hyper-parameters are selected on a validation split of only 8 pages, introducing potential overfitting to the validation distribution.
 
-The transfer baseline experiments demonstrate that fair-budget comparison is essential: DocLayout-YOLO's F1 improved from 0.037 to 0.602 simply by matching YOLOv8n's training budget. Faster R-CNN was trained for only 5 epochs, and a compute-matched comparison with YOLOv8n is left to future work. Ignore-region agreement remains weak (F1@0.5 = 0.286), and the refined Ignore subtype guideline requires more annotator training. Full-page success remains low, so future work should measure human correction time and downstream OCR effects rather than relying only on box-level metrics. A small expert-transcribed subset is planned to enable oracle-crop and detected-crop CER/WER case studies.
+The transfer baseline experiments demonstrate that fair-budget comparison is essential: DocLayout-YOLO's F1 improved from 0.037 to 0.602 simply by matching YOLOv8n's training budget. Faster R-CNN was trained for only 5 epochs, and a compute-matched comparison with YOLOv8n is left to future work. Ignore-region agreement remains weak (F1@0.5 = 0.286). Full-page success remains low, so future work should measure human correction time and downstream OCR effects.
 
 \section{Conclusion}
-We presented a pilot-scale page-level layout-analysis evaluation protocol for traditional Mongolian historical archives. On an expanded 54-page test set, YOLOv8n achieves F1 = 0.875 vs.\ 0.722 for the heuristic baseline, while Faster R-CNN reaches 0.866. Fair-budget retraining reveals that DocLayout-YOLO can improve from F1 = 0.037 to 0.602 with sufficient domain adaptation, a finding missed by short-budget comparison alone. However, full-page success remains low (0.074) and no new detector architecture or learned reading-order module is proposed. The present system should therefore be viewed as a candidate crop generator and diagnostic evaluation package for future traditional Mongolian archival OCR research.
+We presented a pilot-scale page-level layout-analysis evaluation protocol for traditional Mongolian historical archives. On an expanded 54-page test set, YOLOv8n achieves F1 = 0.875 vs.\ 0.722 for the heuristic baseline, while Faster R-CNN reaches 0.866. Fair-budget retraining reveals that DocLayout-YOLO can improve from F1 = 0.037 to 0.602 with sufficient domain adaptation. However, full-page success remains low (0.074) and no new detector architecture or learned reading-order module is proposed. The present system should therefore be viewed as a candidate crop generator and diagnostic evaluation package for future traditional Mongolian archival OCR research.
 
 \section*{Data Availability}
-Non-image research artifacts (annotation schema in English and Chinese, 105-page split manifest, prediction JSON files for all reported tables, Python evaluation scripts with documented command-line entry points, and training protocol documentation including random seed 20260513, optimizer SGD momentum 0.937, cosine learning rate schedule initial 0.01, default ultralytics YOLOv8n augmentations and NMS, environment versions Python~3.9, PyTorch~2.8, ultralytics~8.4) are prepared for release. Archive images are subject to institutional access constraints; metric recomputation from shared annotations and prediction files is fully reproducible without retraining or GPU access.
+Non-image research artifacts (annotation schema, 105-page split manifest, prediction JSON files, Python evaluation scripts, training protocol documentation including random seed 20260513, optimizer SGD momentum 0.937, and environment versions Python~3.9, PyTorch~2.8, ultralytics~8.4) are prepared for release. Archive images are subject to institutional access constraints; metric recomputation from shared annotations and prediction files is fully reproducible without retraining or GPU access.
 
-\section*{Author Contributions}
-Lanying Liang: Conceptualization, Data Curation, Writing -- Original Draft. Yuefeng Liu: Methodology, Software, Validation, Writing -- Review \& Editing, Supervision.
-
-\section*{Ethics Statement}
-This study uses historical archive images for document analysis and digital preservation. No personal intervention or modern human-subject experiment is involved. The archive images may contain historical seals and institutional markings; these are treated as layout artifacts and are not used to extract or publish personal identifiers.
-
-\section*{Funding}
+\section*{Acknowledgments}
 This work was supported by the National Natural Science Foundation of China (Grant No.\ 62341604), the Science and Technology Project of Inner Mongolia Autonomous Region Archives Bureau (Grant No.\ 2022-36), the China Scholarship Council (Grant No.\ 202408150080), and the General Project of the 14th Five-Year Plan for Educational Science of Inner Mongolia Autonomous Region (Grant No.\ NGJGH2025013).
 
-\begin{thebibliography}{10}
+\begin{thebibliography}{18}
 
 \bibitem{likforman2007textline}
-L. Likforman-Sulem, A. Zahour, and B. Taconet, ``Text line segmentation of historical documents: a survey,'' \emph{Int. J. Document Analysis and Recognition}, vol. 9, pp. 123--138, 2007.
+L. Likforman-Sulem, A. Zahour, B. Taconet, ``Text line segmentation of historical documents: a survey,'' \emph{Int. J. Document Analysis and Recognition}, vol. 9, pp. 123--138, 2007.
 
 \bibitem{nikolaidou2022survey}
-K. Nikolaidou, M. Seuret, H. Mokayed, and M. Liwicki, ``A survey of historical document image datasets,'' \emph{Int. J. Document Analysis and Recognition}, vol. 25, pp. 305--338, 2022.
+K. Nikolaidou, M. Seuret, H. Mokayed, M. Liwicki, ``A survey of historical document image datasets,'' \emph{Int. J. Document Analysis and Recognition}, vol. 25, pp. 305--338, 2022.
 
 \bibitem{gruning2017readbad}
-T. Gr\"uning, R. Labahn, M. Diem, F. Kleber, and S. Fiel, ``READ-BAD: A new dataset and evaluation scheme for baseline detection in archival documents,'' arXiv:1705.03311, 2017.
+T. Gr\"uning, R. Labahn, M. Diem, F. Kleber, S. Fiel, ``READ-BAD: A new dataset and evaluation scheme for baseline detection in archival documents,'' arXiv:1705.03311, 2017.
 
 \bibitem{shi2023m5hisdoc}
 Y. Shi, C. Liu, D. Peng, C. Jian, et al., ``M5HisDoc: A large-scale multi-style Chinese historical document analysis benchmark,'' in \emph{Proc. NeurIPS}, 2023.
 
 \bibitem{oliveira2018dhsegment}
-S. Ares Oliveira, B. Seguin, and F. Kaplan, ``dhSegment: A generic deep-learning approach for document segmentation,'' in \emph{Proc. ICFHR}, 2018, pp. 7--12.
+S. Ares Oliveira, B. Seguin, F. Kaplan, ``dhSegment: A generic deep-learning approach for document segmentation,'' in \emph{Proc. ICFHR}, 2018, pp. 7--12.
 
 \bibitem{simistira2016diva}
-F. Simistira, M. Seuret, N. Eichenberger, A. Garz, M. Liwicki, and R. Ingold, ``DIVA-HisDB: A precisely annotated large dataset of challenging medieval manuscripts,'' in \emph{Proc. ICFHR}, 2016, pp. 471--476.
+F. Simistira, M. Seuret, N. Eichenberger, A. Garz, M. Liwicki, R. Ingold, ``DIVA-HisDB: A precisely annotated large dataset of challenging medieval manuscripts,'' in \emph{Proc. ICFHR}, 2016, pp. 471--476.
 
 \bibitem{clausner2019icdar}
-C. Clausner, A. Antonacopoulos, and S. Pletschacher, ``ICDAR2019 competition on recognition of documents with complex layouts---RDCL2019,'' in \emph{Proc. ICDAR}, 2019, pp. 1521--1526.
+C. Clausner, A. Antonacopoulos, S. Pletschacher, ``ICDAR2019 competition on recognition of documents with complex layouts---RDCL2019,'' in \emph{Proc. ICDAR}, 2019, pp. 1521--1526.
 
 \bibitem{pan2023molhw}
-Y. Pan, D. Fan, H. Wu, and D. Teng, ``A new dataset for Mongolian online handwritten recognition,'' \emph{Scientific Reports}, vol. 13, article 26, 2023.
+Y. Pan, D. Fan, H. Wu, D. Teng, ``A new dataset for Mongolian online handwritten recognition,'' \emph{Scientific Reports}, vol. 13, article 26, 2023.
 
 \bibitem{sun2023mongolian}
-S. Sun, H. Wei, and Y. Wang, ``A hybrid approach using convolution and transformer for Mongolian ancient documents recognition,'' in \emph{Proc. ICONIP}, 2023.
+S. Sun, H. Wei, Y. Wang, ``A hybrid approach using convolution and transformer for Mongolian ancient documents recognition,'' in \emph{Proc. ICONIP}, 2023.
 
 \bibitem{lu2024mongolian}
-M. Lu, F. Bao, H. Zhang, and G. Gao, ``The image and ground truth dataset of Mongolian movable-type newspapers for text recognition,'' \emph{IJDAR}, 2024.
+M. Lu, F. Bao, H. Zhang, G. Gao, ``The image and ground truth dataset of Mongolian movable-type newspapers for text recognition,'' \emph{IJDAR}, 2024.
 
 \bibitem{zhong2019publaynet}
-X. Zhong, J. Tang, and A. J. Yepes, ``PubLayNet: largest dataset ever for document layout analysis,'' in \emph{Proc. ICDAR}, 2019, pp. 1015--1022.
+X. Zhong, J. Tang, A. J. Yepes, ``PubLayNet: largest dataset ever for document layout analysis,'' in \emph{Proc. ICDAR}, 2019, pp. 1015--1022.
 
 \bibitem{pfitzmann2022doclaynet}
-B. Pfitzmann, C. Auer, M. Dolfi, A. S. Nassar, and P. W. J. Staar, ``DocLayNet: A large human-annotated dataset for document-layout analysis,'' in \emph{Proc. ACM SIGKDD}, 2022.
+B. Pfitzmann, C. Auer, M. Dolfi, A. S. Nassar, P. W. J. Staar, ``DocLayNet: A large human-annotated dataset for document-layout analysis,'' in \emph{Proc. ACM SIGKDD}, 2022.
 
 \bibitem{shen2021layoutparser}
-Z. Shen, R. Zhang, M. Dell, B. C. G. Lee, J. Carlson, and W. Li, ``LayoutParser: A unified toolkit for deep learning based document image analysis,'' in \emph{Proc. ICDAR}, LNCS 12821, 2021, pp. 131--146.
+Z. Shen, R. Zhang, M. Dell, B. C. G. Lee, J. Carlson, W. Li, ``LayoutParser: A unified toolkit for deep learning based document image analysis,'' in \emph{Proc. ICDAR}, LNCS 12821, 2021, pp. 131--146.
 
 \bibitem{quiros2022reading}
-L. Quir\'os and E. Vidal, ``Reading order detection on handwritten documents,'' \emph{Neural Computing and Applications}, vol. 34, pp. 9593--9611, 2022.
+L. Quir\'os, E. Vidal, ``Reading order detection on handwritten documents,'' \emph{Neural Computing and Applications}, vol. 34, pp. 9593--9611, 2022.
 
 \bibitem{neudecker2019ocrd}
-C. Neudecker, K. Baierer, M. Federbusch, M. Boenig, K.-M. W\"urzner, V. Hartmann, and E. Herrmann, ``OCR-D: An end-to-end open source OCR framework for historical printed documents,'' in \emph{Proc. DATeCH}, 2019, pp. 53--58.
+C. Neudecker, K. Baierer, M. Federbusch, M. Boenig, K.-M. W\"urzner, V. Hartmann, E. Herrmann, ``OCR-D: An end-to-end open source OCR framework for historical printed documents,'' in \emph{Proc. DATeCH}, 2019, pp. 53--58.
 
 \bibitem{deng2023yolo}
-Q. Deng, M. Ibrayim, A. Hamdulla, and C. Zhang, ``The YOLO model that still excels in document layout analysis,'' \emph{Signal, Image and Video Processing}, vol. 18, no. 2, pp. 1539--1548, 2024.
+Q. Deng, M. Ibrayim, A. Hamdulla, C. Zhang, ``The YOLO model that still excels in document layout analysis,'' \emph{Signal, Image and Video Processing}, vol. 18, no. 2, pp. 1539--1548, 2024.
 
 \bibitem{zhao2024doclayout}
-Z. Zhao, H. Kang, B. Wang, and C. He, ``DocLayout-YOLO: Enhancing document layout analysis through diverse synthetic data and global-to-local adaptive perception,'' arXiv:2410.12628, 2024.
+Z. Zhao, H. Kang, B. Wang, C. He, ``DocLayout-YOLO: Enhancing document layout analysis through diverse synthetic data and global-to-local adaptive perception,'' arXiv:2410.12628, 2024.
 
 \bibitem{jocher2023yolov8}
-G. Jocher, A. Chaurasia, and J. Qiu, ``Ultralytics YOLOv8,'' software, version 8.0.0, 2023. Available: \url{https://github.com/ultralytics/ultralytics}.
+G. Jocher, A. Chaurasia, J. Qiu, ``Ultralytics YOLOv8,'' software, version 8.0.0, 2023. Available: \url{https://github.com/ultralytics/ultralytics}.
 
 \end{thebibliography}
 
