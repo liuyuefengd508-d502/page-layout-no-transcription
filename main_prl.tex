@@ -15,12 +15,12 @@
 \title{Pilot-Scale Text Column Detection and Reading-Order Recovery for Traditional Mongolian Historical Archives}
 
 \author[1]{Lanying Liang}
+\ead{lianglanying@imust.edu.cn}
 \author[2]{Yuefeng Liu\corref{corresponding}}
+\ead{liuyuefeng@imust.edu.cn}
 \cortext[corresponding]{Corresponding author: liuyuefeng@imust.edu.cn}
 \address[1]{Archives, Inner Mongolia University of Science and Technology, Baotou, 014010, Inner Mongolia, China}
 \address[2]{School of Digital and Intelligent Industry (School of Cyber Science and Technology), Inner Mongolia University of Science and Technology, Baotou, 014010, Inner Mongolia, China}
-\ead[1]{lianglanying@imust.edu.cn}
-\ead[2]{liuyuefeng@imust.edu.cn}
 
 \begin{abstract}
 Traditional Mongolian historical archives pose a challenging page-level document analysis problem because the script is vertically written, cursive, low-resource, and frequently degraded by aging paper, ink variation, seals, scanning rotation, and heterogeneous archive sources. Since expert transcription of handwritten traditional Mongolian columns is expensive and currently unavailable, this concise study focuses on an upstream stage for archival OCR: text-column detection and reading-order recovery. We construct a page-level annotation protocol with text-column bounding boxes, ignored noise regions, orientation metadata, and reading order. We compare classical rule-based extraction, YOLOv8n, and a COCO-pretrained Faster R-CNN MobileNet detector with a rotation-aware ordering strategy. On an expanded 54-page test set, YOLOv8n improves the project-level IoU@0.5 F1 score from 0.722 for the heuristic baseline to 0.875 and achieves 0.887 reading-order accuracy on matched columns, while Faster R-CNN reaches 0.866 F1. However, full-page success remains low (0.074 for YOLOv8n), so the system should be interpreted as a candidate crop generator rather than a fully automatic solution. We also conduct fair-budget retraining of transfer baselines (RT-DETR-L, DocLayout-YOLO) and find that DocLayout-YOLO improves from F1 = 0.037 (5 epochs) to 0.602 (50 epochs), demonstrating that modern layout priors can transfer with sufficient domain adaptation. We provide a crop-export-ready interface, but do not report CER/WER because expert column-level transcripts are not yet available.
