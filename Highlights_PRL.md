@@ -1,5 +1,5 @@
-- First page-level layout analysis protocol for handwritten traditional Mongolian historical archives.
-- Expanded 105-page dataset with 54-page test set and bootstrap-based uncertainty quantification.
-- YOLOv8n achieves F1 0.875 vs. heuristic 0.722; DocLayout-YOLO improves from F1 0.037 to 0.602 with fair-budget retraining.
-- Pairwise reading-order accuracy evaluated on matched columns with explicit discussion of metric limitations.
-- Crop-export-ready interface provided; CER/WER not reported due to unavailable expert transcripts.
+- First layout analysis protocol for handwritten traditional Mongolian archives.
+- 105-page dataset with 54-page test set and bootstrap confidence intervals.
+- YOLOv8n F1 0.875 vs. heuristic 0.722; DocLayout-YOLO improves 0.037 to 0.602.
+- Pairwise reading-order accuracy with explicit metric limitation discussion.
+- Crop-export interface provided; CER/WER not reported (no expert transcripts).
