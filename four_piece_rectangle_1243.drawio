@@ -1,0 +1,19 @@
+<mxfile host="app.diagrams.net" modified="2026-05-18T12:32:00.000Z" agent="Cursor" version="24.7.17" type="device">
+  <diagram name="1243 rectangle" id="four-piece-1243">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="0" arrows="0" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="最后一题：①②④③ 从左到右拼成长方形" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=28;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="220" y="80" width="660" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="svg-drawing" value="" style="shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=0;aspect=fixed;image=data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22760%22%20height%3D%22180%22%20viewBox%3D%220%200%20760%20180%22%3E%3Cg%20stroke%3D%22%23111%22%20stroke-width%3D%224%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M0%200%20H220%20L0%20180%20Z%22%20fill%3D%22%23fff4cf%22%2F%3E%3Cpath%20d%3D%22M0%20180%20L220%200%20L330%2090%20L270%20180%20Z%22%20fill%3D%22%23dff3ff%22%2F%3E%3Cpath%20d%3D%22M220%200%20H610%20L530%20180%20H270%20L330%2090%20Z%22%20fill%3D%22%23e6f6d5%22%2F%3E%3Cpath%20d%3D%22M610%200%20H760%20V180%20H530%20Z%22%20fill%3D%22%23f2e2ff%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22760%22%20height%3D%22180%22%20fill%3D%22none%22%2F%3E%3Cline%20x1%3D%22220%22%20y1%3D%220%22%20x2%3D%220%22%20y2%3D%22180%22%2F%3E%3Cpolyline%20points%3D%22220%2C0%20330%2C90%20270%2C180%22%20fill%3D%22none%22%2F%3E%3Cline%20x1%3D%22610%22%20y1%3D%220%22%20x2%3D%22530%22%20y2%3D%22180%22%2F%3E%3Ctext%20x%3D%2280%22%20y%3D%2276%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2246%22%20fill%3D%22%23111%22%20stroke%3D%22none%22%3E%E2%91%A0%3C%2Ftext%3E%3Ctext%20x%3D%22210%22%20y%3D%22126%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2246%22%20fill%3D%22%23111%22%20stroke%3D%22none%22%3E%E2%91%A1%3C%2Ftext%3E%3Ctext%20x%3D%22470%22%20y%3D%2292%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2246%22%20fill%3D%22%23111%22%20stroke%3D%22none%22%3E%E2%91%A3%3C%2Ftext%3E%3Ctext%20x%3D%22665%22%20y%3D%22108%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2C%20sans-serif%22%20font-size%3D%2246%22%20fill%3D%22%23111%22%20stroke%3D%22none%22%3E%E2%91%A2%3C%2Ftext%3E%3C%2Fg%3E%3C%2Fsvg%3E;" vertex="1" parent="1">
+          <mxGeometry x="170" y="180" width="760" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="note" value="画法：外框是长方形；从左到右标 ①、②、④、③；② 的尖角插进 ④ 左边的凹口。" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=22" vertex="1" parent="1">
+          <mxGeometry x="120" y="410" width="860" height="60" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>1243 长方形拼图</title>
+  <style>
+    body {
+      margin: 0;
+      background: #fffdf7;
+      font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: #222;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+    }
+    .wrap {
+      text-align: center;
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 600;
+      margin: 0 0 28px;
+    }
+    svg {
+      width: min(900px, 94vw);
+      height: auto;
+    }
+    .note {
+      margin-top: 22px;
+      font-size: 22px;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>最后一题：①②④③ 从左到右拼成长方形</h1>
+    <svg viewBox="0 0 900 260" role="img" aria-label="①②④③ 从左到右拼成长方形示意图">
+      <g transform="translate(70 35)" stroke="#111" stroke-width="4" stroke-linejoin="round">
+        <path d="M0 0 H220 L0 180 Z" fill="#fff4cf"/>
+        <path d="M0 180 L220 0 L330 90 L270 180 Z" fill="#dff3ff"/>
+        <path d="M220 0 H610 L530 180 H270 L330 90 Z" fill="#e6f6d5"/>
+        <path d="M610 0 H760 V180 H530 Z" fill="#f2e2ff"/>
+        <rect x="0" y="0" width="760" height="180" fill="none"/>
+        <line x1="220" y1="0" x2="0" y2="180"/>
+        <polyline points="220,0 330,90 270,180" fill="none"/>
+        <line x1="610" y1="0" x2="530" y2="180"/>
+        <text x="80" y="76" text-anchor="middle" font-size="46" fill="#111" stroke="none">①</text>
+        <text x="210" y="126" text-anchor="middle" font-size="46" fill="#111" stroke="none">②</text>
+        <text x="470" y="92" text-anchor="middle" font-size="46" fill="#111" stroke="none">④</text>
+        <text x="665" y="108" text-anchor="middle" font-size="46" fill="#111" stroke="none">③</text>
+      </g>
+    </svg>
+    <div class="note">最终修正版：② 是楔形四边形，插进 ④ 左边的凹口，整体是 ①、②、④、③。</div>
+  </main>
+</body>
+</html>
