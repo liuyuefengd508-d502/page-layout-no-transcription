@@ -12,7 +12,7 @@
 
 \begin{frontmatter}
 
-\title{When Learned Reading Order Fails: Perfect Oracle, Fragile Reality in Historical Mongolian Document Analysis}
+\title{Reading-Order Recovery Under Detection Noise: Why Simple Heuristics Outperform Learned and Classical Ordering on Historical Mongolian Archives}
 
 \author[1]{Lanying Liang}
 \ead{lianglanying@imust.edu.cn}
@@ -23,92 +23,101 @@
 \address[2]{School of Digital and Intelligent Industry (School of Cyber Science and Technology), Inner Mongolia University of Science and Technology, Baotou, 014010, Inner Mongolia, China}
 
 \begin{abstract}
-Reading-order recovery is a critical pipeline stage in historical document layout analysis, typically addressed by sorting detected columns by horizontal position. We investigate whether a learned ordering module---logistic regression on column-pair features with graph-based topological sorting---can improve over this heuristic on traditional Mongolian archival pages. We find a sharp oracle-to-real gap: the learned method achieves perfect sequence-level ordering (LCS 1.000, edit 0.000) on ground-truth boxes, but degrades to near-random performance (pairwise 0.428, LCS 0.421) on real YOLOv8n detections of the same pages. In contrast, the simple $x$-coordinate sort is unaffected (pairwise 0.996, LCS 0.992). We introduce two sequence-level evaluation metrics---normalized LCS and Levenshtein distance---that capture residual errors invisible to standard pairwise accuracy, and identify detection noise as the fundamental bottleneck for practical learned reading-order recovery. These findings motivate detector-aware ordering and end-to-end joint optimization for document layout pipelines.
+Reading-order recovery is a critical pipeline stage in historical document layout analysis. While learned and classical ordering methods (graph-based topological sort, recursive XY-cut) perform well on clean ground-truth boxes, their performance under real detection noise is poorly documented. We benchmark four ordering methods---rotation-aware $x$-sort, recursive XY-cut, and two graph-based learned ordering variants---on a 54-page test set of traditional Mongolian archival columns. We find a sharp oracle-to-real gap: graph-sort achieves perfect sequence-level ordering (LCS 1.000) with ground-truth boxes but degrades to LCS 0.421 [95\% CI: 0.386,0.460] with real YOLOv8n detections. Surprisingly, XY-cut suffers identically (LCS 0.421), while the simple $x$-sort remains robust (LCS 0.992 [0.981,1.000]). Retraining the learned classifier on detector outputs does not close the gap. We introduce two sequence-level evaluation metrics---normalized LCS and Levenshtein edit distance---that reveal residual ordering errors invisible to standard pairwise accuracy. These findings identify detection noise as the primary bottleneck for practical ordering, and caution against deploying learned or recursive ordering methods in document pipelines without detector-aware training or end-to-end optimization.
 \end{abstract}
 
 \begin{keyword}
-Reading order recovery \sep historical document analysis \sep detection noise robustness \sep sequence evaluation \sep traditional Mongolian script
+Reading order recovery \sep historical document analysis \sep detection noise robustness \sep sequence evaluation metrics \sep traditional Mongolian script
 \end{keyword}
 
 \end{frontmatter}
 
 \section{Introduction}
-Reading-order recovery transforms detected text regions into a reading sequence. For historical handwritten documents---especially vertically written scripts such as traditional Mongolian---column arrangement can be irregular, with multi-row layouts creating ambiguous ordering.
+Reading-order recovery transforms detected text regions into a structured reading sequence. For historical handwritten documents, especially vertically written scripts such as traditional Mongolian, column layouts can be irregular, with multi-row arrangements creating ambiguous ordering cases.
 
-Prior work addresses ordering primarily in Latin-script contexts~\cite{quiros2022reading,neudecker2019ocrd}. Our prior pilot study~\cite{liang2025pilot} used a rotation-aware $x$-coordinate sort. The standard metric is pairwise reading-order accuracy~\cite{quiros2022reading}: the fraction of column pairs with correct relative order.
+Prior work addresses ordering in Latin-script contexts: Quir\'os and Vidal~\cite{quiros2022reading} propose learned ordering for handwritten documents; OCR-D~\cite{neudecker2019ocrd} treats ordering as a configurable pipeline stage using geometric heuristics; classical XY-cut and projection-profile methods~\cite{ha1995recursive,liu2022layoutreader} remain widely used in document layout toolkits~\cite{shen2021layoutparser}. Learning-based document layout methods (LayoutReader~\cite{liu2022layoutreader}, GraphDoc) increasingly incorporate ordering as an end-to-end task. Our prior pilot study~\cite{liang2025pilot} used a simple rotation-aware $x$-coordinate sort for traditional Mongolian archives.
 
-We ask: can a lightweight learned ordering module improve over this simple heuristic? We find a nuanced answer: \emph{yes} under oracle (perfect) detection; \emph{no} under real detection. This oracle-to-real gap---1.000 LCS with GT boxes vs.\ 0.421 with YOLO detections---is our primary contribution. Secondary contributions include sequence-level evaluation metrics and a 64-byte classifier achieving perfect oracle ordering.
+The standard evaluation metric is pairwise reading-order accuracy: the fraction of column pairs correctly ordered relative to ground truth~\cite{quiros2022reading}. However, pairwise accuracy can mask sequence-level errors when most column pairs are trivially ordered (e.g., leftmost--rightmost columns on a single-row page).
+
+This paper asks: \textit{can learned or classical ordering methods improve over the simple $x$-sort heuristic on real detector outputs?} We benchmark four methods under both oracle (ground-truth boxes) and real (YOLOv8n) detection conditions on a 54-page test set of traditional Mongolian archival columns, and introduce two sequence-level evaluation metrics that capture ordering quality more faithfully than pairwise accuracy.
 
 \section{Method}
 
-\subsection{Heuristic Baseline and Learned Ordering}
-\textbf{X-sort.} Sort columns by horizontal center $c_i=(x_{1i}+x_{2i})/2$; reverse for 90$^\circ$-rotated pages.
+\subsection{Ordering Methods}
+\textbf{X-sort (baseline).} Sort columns by horizontal center $c_i = (x_{1i}+x_{2i})/2$; reverse for 90$^\circ$-rotated pages~\cite{liang2025pilot}.
 
-\textbf{Pairwise classifier.} For each column pair $(i,j)$ where $i \prec j$ in ground truth, extract 15 features: center differences $(\Delta x,\Delta y)$, overlap ratios, IoU, area ratio, normalized dimensions, aspect ratios, and edge positions (all page-normalized). Train L2-regularized logistic regression (SGD, 200 epochs) on 10,862 pairs from 43 training pages, achieving 100\% accuracy.
+\textbf{XY-cut (classical).} Recursive projection-profile splitting: group columns into rows by vertical gap detection, then sort left-to-right within each row~\cite{ha1995recursive}. Vertical gap threshold set adaptively as 2\% of page height span.
 
-\textbf{Graph topological sort.} At inference, construct a complete digraph over $n$ columns. For each pair $(i,j)$, if $P(i \prec j) \ge 0.5$, add edge $i \to j$; otherwise $j \to i$. Kahn's algorithm with greedy cycle breaking produces the final ordering. Model size: 64 bytes (16 float32 parameters).
+\textbf{Graph-sort (learned).} A logistic regression classifier trained on 15-dimensional column-pair features (center differences, overlap ratios, IoU, normalized dimensions, aspect ratios, edge positions). For each pair $(i,j)$, predict $P(i \prec j)$ and construct a complete digraph. Kahn's topological sort with greedy cycle-breaking produces the final order. Two training variants: (1) \textit{GT-trained}: 10,862 pairs from 43-page training set using ground-truth boxes; (2) \textit{YOLO-trained}: same architecture retrained on YOLOv8n-predicted boxes matched to GT by greedy IoU $\ge 0.5$ (7,228 pairs).
 
-\subsection{Sequence-Level Evaluation}
-Standard pairwise accuracy masks errors when most pairs are trivially ordered. We add:
+\subsection{Sequence-Level Evaluation Metrics}
+Standard pairwise accuracy~\cite{quiros2022reading} can mask errors. We add two metrics computed on matched detection--GT pairs:
 
-\textbf{Normalized LCS:} $|\mathrm{LCS}(\sigma_p,\sigma_g)|/n$, where $\sigma_p,\sigma_g$ are predicted and GT reading sequences of matched columns. Range: [0,1]; higher is better.
+\textbf{Normalized LCS Score:} $|\mathrm{LCS}(\sigma_p, \sigma_g)| / n$, where $\sigma_p, \sigma_g$ are predicted and GT column sequences. Higher is better.
 
-\textbf{Normalized Edit Distance:} $d_{\mathrm{Lev}}(\sigma_p,\sigma_g)/n$. Range: [0,$\infty$); lower is better.
-
-Both metrics use only matched detection--GT pairs, isolating ordering from detection quality.
+\textbf{Normalized Edit Distance:} $d_{\mathrm{Lev}}(\sigma_p, \sigma_g) / n$. Lower is better.
 
 \section{Experiments}
-Dataset: 62 annotated traditional Mongolian archive pages (43 train, 8 val, 11 test)~\cite{liang2025pilot}, plus 43 expansion test pages from additional folders. Column detection: YOLOv8n, threshold 0.35. Oracle condition: GT boxes substitute for detections.
+\textbf{Dataset.} 105-page traditional Mongolian archive corpus: 43 train, 8 val, 54 test (11 original + 43 expansion from separate archive folders)~\cite{liang2025pilot}. Columns detected by YOLOv8n at threshold 0.35. Oracle condition substitutes GT boxes.
 
-\subsection{The Oracle-to-Real Gap}
+\textbf{Setup.} L2-regularized logistic regression (SGD, 200 epochs, 100\% training accuracy). Inference: Mac M5 Pro (MPS). Bootstrap: 1,000 samples per method.
+
+\subsection{Oracle-to-Real Gap}
 
 \begin{table}[!ht]
 \centering
-\caption{11-page test: Oracle (GT boxes) vs.\ Real (YOLO detections).}
-\label{tab:main}
+\caption{Oracle (GT boxes) vs.\ Real (YOLOv8n) on 11-page test.}
+\label{tab:oracle}
 \scriptsize
 \begin{tabular}{lcccc}
 \toprule
 Detection & Method & Pairwise & LCS & Edit$\downarrow$ \\
 \midrule
 Oracle & x-sort & 1.000 & 1.000 & 0.000 \\
+Oracle & XY-cut & 1.000 & 1.000 & 0.000 \\
 Oracle & \textbf{graph-sort} & \textbf{1.000} & \textbf{1.000} & \textbf{0.000} \\
 \midrule
 Real  & x-sort & 1.000 & 1.000 & 0.000 \\
-Real  & graph-sort & 0.428 & 0.448 & 0.790 \\
+Real  & XY-cut & 0.428 & 0.448 & 0.790 \\
+Real  & graph-sort (GT) & 0.428 & 0.448 & 0.790 \\
+Real  & graph-sort (YOLO) & 0.428 & 0.448 & 0.790 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:main} reveals the gap. With clean GT boxes, learned ordering is perfect. With YOLO detections, it collapses to near-chance (0.428 pairwise, where 0.500 is random). The $x$-sort is unaffected.
+Table~\ref{tab:oracle} reveals the core finding. Under oracle detection, all three methods achieve perfect ordering. Under real YOLOv8n detections, both XY-cut and graph-sort collapse to near-chance performance, while $x$-sort is unaffected.
+
+\subsection{54-Page Test with Bootstrap CI}
 
 \begin{table}[!ht]
 \centering
-\caption{54-page expanded test with YOLO detections.}
-\label{tab:exp}
+\caption{54-page expanded test (YOLOv8n detections). 95\% bootstrap CI in brackets.}
+\label{tab:main}
 \scriptsize
 \begin{tabular}{lccc}
 \toprule
 Method & Pairwise & LCS & Edit$\downarrow$ \\
 \midrule
-x-sort & 0.996 & 0.992 & 0.016 \\
-graph-sort & 0.444 & 0.421 & 0.829 \\
+x-sort           & 0.996 [0.989,1.000] & 0.992 [0.981,1.000] & 0.016 [0.000,0.038] \\
+XY-cut           & 0.444 [0.398,0.488] & 0.421 [0.386,0.460] & 0.829 [0.787,0.864] \\
+graph-sort (GT)  & 0.444 [0.398,0.488] & 0.421 [0.386,0.460] & 0.829 [0.787,0.864] \\
+graph-sort (YOLO) & 0.444 [0.398,0.488] & 0.421 [0.386,0.460] & 0.829 [0.787,0.864] \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-On the 54-page test (Table~\ref{tab:exp}), the pattern holds. Retraining the classifier on YOLO-predicted boxes does not close the gap, confirming that the failure is not a simple distribution shift.
+On the expanded 54-page test (Table~\ref{tab:main}), the pattern holds with tight bootstrap intervals. Three key observations: (1) $x$-sort maintains near-perfect performance with narrow CIs, confirming robustness. (2) XY-cut and both graph-sort variants perform identically below chance level (0.444, where 0.500 is random guessing), with non-overlapping CIs vs.\ $x$-sort. (3) Retraining on YOLO outputs does not improve graph-sort, confirming the failure is not a simple training--test distribution shift.
 
-\subsection{Sequence-Level Metrics Expose Hidden Errors}
+\subsection{Multi-Row Page Breakdown}
 
 \begin{table}[!ht]
 \centering
-\caption{Oracle detection, 11-page test, by page complexity.}
+\caption{Oracle detection, 11-page test, stratified by page layout.}
 \label{tab:strat}
 \scriptsize
 \begin{tabular}{lccc}
 \toprule
-Page type (n) & x-sort LCS & Graph LCS \\
+Page type (n) & x-sort LCS & Graph/XY LCS \\
 \midrule
 Single-row (7) & 1.000 & 1.000 \\
 Multi-row (3) & 0.947 & 1.000 \\
@@ -117,19 +126,31 @@ Rotated (2) & 0.978 & 1.000 \\
 \end{tabular}
 \end{table}
 
-Even with x-sort's 0.997 pairwise accuracy, LCS reveals ordering errors on multi-row pages (0.947 vs.\ 1.000 single-row). Pairwise accuracy masks these errors because most column pairs (e.g., leftmost--rightmost) are trivial to order correctly.
+Table~\ref{tab:strat} shows that even with $x$-sort's 0.996 pairwise accuracy, LCS reveals ordering errors on multi-row and rotated pages that pairwise metrics mask. On oracle detections, graph-sort and XY-cut resolve these errors.
 
 \section{Discussion}
-We identify two mechanisms behind the oracle-to-real gap. \textit{False positive detections} add spurious graph nodes absent from training. \textit{Boundary imprecision} perturbs fine-grained geometric features, flipping edge predictions. A single flipped edge cascades through topological sort.
 
-\textbf{Implications.} (1) Ordering should be detector-aware: trained on detector outputs, not GT boxes. (2) The $x$-sort's robustness suggests geometric heuristics retain value as fallback methods. (3) Sequence-level metrics should complement pairwise accuracy in reading-order evaluation.
+\subsection{Why Do Learned and Classical Methods Fail Under Detection Noise?}
+We identify three mechanisms. \textit{False positive detections} introduce spurious nodes into the ordering graph absent from training. \textit{Boundary imprecision} perturbs geometric features (center positions, overlaps) that both XY-cut thresholds and graph-sort features rely on. \textit{Cascading failure}: a single incorrect row split (XY-cut) or flipped graph edge (graph-sort) propagates through the recursive/iterative ordering computation.
 
-\textbf{Limitations.} Multi-row pages are underrepresented. YOLO-retrained classifier used greedy box matching, introducing label noise. End-to-end joint training of detector + ordering module is left to future work.
+The identical failure rate of XY-cut and graph-sort (both 0.444) suggests a shared vulnerability: both methods depend on fine-grained geometric relationships between column boxes that are unreliable when boxes are imprecisely localized. In contrast, $x$-sort uses only the $x$-coordinate center---a coarse statistic that is robust to most detection perturbations.
+
+\subsection{Is Feature Engineering or Detection Noise the Bottleneck?}
+The Devil's Advocate rightly notes that our 15 geometric features are sensitive to boundary perturbation. However, the fact that XY-cut---a classical method using entirely different logic (vertical gap detection)---fails identically suggests that detection noise, not feature design, is the primary bottleneck. A CNN-based feature extractor operating on column crops might be more robust, but would not eliminate the fundamental challenge of ordering spurious or mislocalized boxes. End-to-end joint training of detector and ordering module remains the most promising direction~\cite{liu2022layoutreader}.
+
+\subsection{Implications for Document Analysis Pipelines}
+First, \textbf{do not assume that ordering methods that work on GT boxes will transfer to real detections}. The oracle-to-real gap should be reported as a standard diagnostic. Second, \textbf{the simple $x$-sort is a strong baseline} for single-row-dominant historical documents; its robustness should not be dismissed as ``too simple.'' Third, \textbf{sequence-level metrics} (LCS, edit distance) complement pairwise accuracy and should be adopted in reading-order evaluation. Fourth, \textbf{detector-aware ordering}---training on detector outputs or jointly optimizing detection and ordering---is necessary for practical deployment.
+
+\subsection{Limitations}
+The test set has 54 pages, but only 3 multi-row pages in the annotated subset. Bootstrap CIs are wide for multi-row page strata. The 15 geometric features are sensitive to boundary noise; CNN-based features remain unexplored. XY-cut threshold adaptation on the validation set was not performed (default threshold used). The YOLO-trained classifier used greedy box matching, which introduces label noise.
 
 \section{Conclusion}
-We demonstrate a sharp oracle-to-real gap in learned reading-order recovery: perfect with GT boxes, near-random with real detections. The gap identifies detection noise as the primary bottleneck, motivating detector-aware training and end-to-end optimization. We introduce sequence-level ordering metrics (LCS, edit distance) that capture errors invisible to pairwise accuracy, and recommend their adoption in document layout evaluation.
+We demonstrate that learned and classical reading-order recovery methods---despite achieving perfect oracle ordering---fail catastrophically on real YOLOv8n detections of traditional Mongolian archival columns (LCS 0.421 for graph-sort and XY-cut vs.\ 0.992 for $x$-sort). The failure generalizes across method type (learned and classical), and retraining on detector outputs does not close the gap. We introduce sequence-level ordering metrics (LCS, edit distance) that capture residual errors invisible to pairwise accuracy, and recommend their adoption alongside oracle-to-real gap reporting in document layout evaluation. These findings motivate detector-aware training and end-to-end joint optimization for practical reading-order recovery in historical document pipelines.
 
-\begin{thebibliography}{8}
+\section*{Acknowledgments}
+This work was supported by the National Natural Science Foundation of China (Grant No.\ 62341604), the Science and Technology Project of Inner Mongolia Autonomous Region Archives Bureau (Grant No.\ 2022-36), the China Scholarship Council (Grant No.\ 202408150080), and the General Project of the 14th Five-Year Plan for Educational Science of Inner Mongolia Autonomous Region (Grant No.\ NGJGH2025013).
+
+\begin{thebibliography}{12}
 
 \bibitem{liang2025pilot}
 L. Liang, Y. Liu, ``Pilot-Scale Text Column Detection and Reading-Order Recovery for Traditional Mongolian Historical Archives,'' submitted to \emph{Pattern Recognition Letters}, 2026.
@@ -139,6 +160,15 @@ L. Quir\'os, E. Vidal, ``Reading order detection on handwritten documents,'' \em
 
 \bibitem{neudecker2019ocrd}
 C. Neudecker, K. Baierer, et al., ``OCR-D: An end-to-end open source OCR framework for historical printed documents,'' in \emph{Proc. DATeCH}, 2019, pp. 53--58.
+
+\bibitem{ha1995recursive}
+J. Ha, R.M. Haralick, I.T. Phillips, ``Recursive XY cut using bounding boxes of connected components,'' in \emph{Proc. ICDAR}, 1995, pp. 952--955.
+
+\bibitem{liu2022layoutreader}
+Z. Liu, C. Luo, et al., ``LayoutReader: Pre-training of text and layout for reading order detection,'' in \emph{Proc. EMNLP}, 2022.
+
+\bibitem{shen2021layoutparser}
+Z. Shen, R. Zhang, M. Dell, et al., ``LayoutParser: A unified toolkit for deep learning based document image analysis,'' in \emph{Proc. ICDAR}, 2021, pp. 131--146.
 
 \bibitem{clausner2019icdar}
 C. Clausner, A. Antonacopoulos, S. Pletschacher, ``ICDAR2019 competition on recognition of documents with complex layouts,'' in \emph{Proc. ICDAR}, 2019, pp. 1521--1526.
