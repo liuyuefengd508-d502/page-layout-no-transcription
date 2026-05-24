@@ -94,7 +94,7 @@ Total  & 999 & 20,115       & 20.1 & 3 \\
 
 \textbf{YOLOv8n from scratch.} To quantify the benefit of COCO pretraining, we also train YOLOv8n from random initialization with identical hyperparameters. This provides a lower-bound reference for the pretraining contribution.
 
-\textbf{Additional baselines (planned).} We acknowledge that ARU-Net~\cite{gruning2019arunet}, dhSegment~\cite{oliveira2018dhsegment}, and Faster R-CNN variants would strengthen the baseline portfolio; these are planned for a follow-up comparative study. Classical projection-based heuristics were attempted but yielded F1 $<$ 0.15 due to the vertical script layout (column-aware horizontal projection; see Table~4). This heuristic is provided as an un-tuned diagnostic sanity check, not as a competitive baseline, and its P/R breakdown is not reported because the column-aware vertical projection was not optimized as a detector (fixed thresholds only). Its aggregate F1 confirms the task is non-trivial for non-learning methods. This confirms the task is non-trivial for non-learning methods.
+\textbf{Additional baselines (planned).} We acknowledge that ARU-Net~\cite{gruning2019arunet}, dhSegment~\cite{oliveira2018dhsegment}, and Faster R-CNN variants would strengthen the baseline portfolio; these are planned for a follow-up comparative study. Classical projection-based heuristics were attempted but yielded F1 $<$ 0.15 due to the vertical script layout (column-aware horizontal projection; see Table~4). This heuristic is provided as an un-tuned diagnostic sanity check, not as a competitive baseline, and its P/R breakdown is not reported because the column-aware horizontal projection was not optimized as a detector (fixed thresholds only). This confirms the task is non-trivial for non-learning methods.
 
 \subsection{Evaluation Metrics}
 Primary metric: greedy IoU@0.5 matching (identical protocol to~\cite{liang2025pilot}). We report precision, recall, F1, and mean matched IoU. Bootstrap 95\% CIs use 1,000 page-level resamples. We also report COCO-style mAP for reference, and discuss the mAP50-95 gap as a diagnostic of the polygon-to-bbox conversion trade-off.
@@ -119,7 +119,7 @@ Test (200 p.) & 0.947 & 0.992 & 0.969 & 0.993 \\
 \begin{table}[t]
 \centering
 \scriptsize\setlength{\tabcolsep}{3pt}
-\caption{Main results on the 200-page test set.}
+\caption{Main results on the 200-page test set. Projection heuristic is an un-tuned diagnostic sanity check (not a detector baseline); its P/R are not reported.}
 \label{tab:results}
 \begin{tabular}{lccccc}
 \toprule
