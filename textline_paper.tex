@@ -12,7 +12,7 @@
 
 \begin{frontmatter}
 
-\title{Text-Line Detection in Handwritten Traditional Mongolian Archives: A First Benchmark with YOLOv8n}
+\title{A First Benchmark for Text-Line Detection in Handwritten Traditional Mongolian Archives}
 
 \author[1]{Lanying Liang}
 \ead{lianglanying@imust.edu.cn}
@@ -46,7 +46,7 @@ Text-line detection has been extensively studied for historical Latin-script doc
 
 Column-level layout analysis for Mongolian archives was recently addressed by~\cite{liang2025pilot} with YOLOv8n and Faster R-CNN detectors. Text-line detection is the natural next step: columns must be decomposed into lines before any recognition model can process them. The polygon annotations used in this work were originally created for a separate handwriting recognition project and are repurposed here for text-line detection benchmarking.
 
-YOLOv8n~\cite{jocher2023yolov8} is chosen as the baseline detector for its speed, reproducibility, and strong performance on small custom datasets. Its anchor-free design and task-aligned label assignment make it suitable for dense text-line prediction.
+YOLOv8n~\cite{jocher2023yolov8} is chosen as the baseline detector for its speed, reproducibility, and strong performance on small custom datasets. Its anchor-free design and task-aligned label assignment make it suitable for dense text-line prediction. Prior text-line detection benchmarks for historical documents include READ-BAD~\cite{gruning2017readbad} (baseline detection in Latin-script archival documents) and the ICDAR competition series on complex document layouts~\cite{clausner2019icdar}. Deep learning methods such as dhSegment~\cite{oliveira2018dhsegment}, ARU-Net~\cite{gruning2019arunet}, and fully convolutional baselines have become standard for historical text-line detection, but none have been applied to vertical Mongolian script.
 
 \section{Dataset}
 The dataset consists of 999 handwritten traditional Mongolian archive page images with polygon-level text-line annotations. Images are high-resolution scans (median $\sim$6,794 $\times$ 4,830 pixels) from multiple archive folders.
@@ -114,9 +114,13 @@ Table~\ref{tab:comparison} compares text-line and column detection. Text-line F1
 \section{Discussion}
 The near-perfect mAP50 and high F1 establish that text-line detection for handwritten Mongolian archives is a tractable problem with modern one-stage detectors, provided sufficient annotated data. The zero overfitting between validation and test suggests that 700 training pages adequately cover the visual diversity of this archive.
 
-\textbf{Limitations.} The benchmark has two main limitations. First, polygon-to-bounding-box conversion discards the precise shape information in the original annotations; future work should evaluate polygon-aware detection metrics. Second, the test set comes from the same archive folders as the training set; cross-archive generalization remains untested. Third, reading order at the text-line level---substantially harder than column-level ordering due to $\sim$21$\times$ more elements per page---is left to future work.
+\textbf{Error analysis.} The 200 false positives (FPs) on the test set correspond to 1.0 extra detection per page on average. Visual inspection suggests that most FPs occur at page edges (scanning borders), near seal impressions, and at inter-line gaps where ink bleed creates spurious text-like regions. The 30 false negatives (FNs) are concentrated on pages with very short text lines (1--2 words) and severely faded ink. Incorporating the Ignore-region protocol from~\cite{liang2025pilot} would likely reduce edge FPs. The high recall (0.992) suggests that missed detections are rare enough to not disrupt downstream recognition.
 
-\textbf{Downstream impact.} Reliable text-line detection is the bridge from layout analysis to handwriting recognition. With F1 = 0.969, detected text-line crops can now be passed to a recognition model (e.g., CRNN or TrOCR) once expert text transcripts become available. This would enable the first end-to-end recognition pipeline for traditional Mongolian archives.
+\textbf{Polygonal vs.\ bounding-box annotation.} Polygon-to-bbox conversion discards the curved shape of handwritten Mongolian text lines. This explains the gap between mAP50 (0.993) and mAP50-95 (0.607): at IoU $\ge$ 0.75, rectangular boxes poorly approximate the true curved extent of some text lines. The $\sim$39-point mAP drop mirrors findings in ICDAR competitions where polygon-based evaluation is preferred for curved text~\cite{clausner2019icdar}. Future work should evaluate polygon-aware metrics (e.g., poly-IoU) or retain the original polygon annotations.
+
+\textbf{Limitations.} The test set shares archive folders with the training set; cross-archive generalization is untested. Reading order at the text-line level ($\sim$21$\times$ more elements per page than column-level ordering) remains an open problem. Bootstrap 95\% CIs for F1 are [0.962,0.975] (1,000 samples by page), confirming the narrow uncertainty around the 0.969 estimate.
+
+\textbf{Downstream impact.} Reliable text-line detection bridges layout analysis to handwriting recognition. With F1 = 0.969, detected text-line crops can be passed to a recognition model (e.g., CRNN or TrOCR) once expert text transcripts become available.
 
 \section{Conclusion}
 We present the first text-line detection benchmark for handwritten traditional Mongolian archives. YOLOv8n achieves F1 = 0.969 (mAP50 = 0.993) on a 200-page test set with zero overfitting. The task is substantially easier than column detection (F1 +0.094), and the 9.5$\times$ larger training set resolves the data scarcity bottleneck identified in prior work. Converted YOLO-format labels, evaluation scripts, and trained weights are released to establish a reproducible baseline.
@@ -146,6 +150,15 @@ G. Jocher, A. Chaurasia, J. Qiu, ``Ultralytics YOLOv8,'' software, version 8.0.0
 
 \bibitem{pan2023molhw}
 Y. Pan, D. Fan, H. Wu, D. Teng, ``A new dataset for Mongolian online handwritten recognition,'' \emph{Scientific Reports}, vol. 13, article 26, 2023.
+
+\bibitem{gruning2019arunet}
+T. Gr\"uning, G. Leifert, T. Strau\ss{}, J. Michael, R. Labahn, ``A two-stage method for text line detection in historical documents,'' \emph{Int. J. Document Analysis and Recognition}, vol. 22, pp. 285--302, 2019.
+
+\bibitem{clausner2019icdar}
+C. Clausner, A. Antonacopoulos, S. Pletschacher, ``ICDAR2019 competition on recognition of documents with complex layouts---RDCL2019,'' in \emph{Proc. ICDAR}, 2019, pp. 1521--1526.
+
+\bibitem{oliveira2018dhsegment}
+S. Ares Oliveira, B. Seguin, F. Kaplan, ``dhSegment: A generic deep-learning approach for document segmentation,'' in \emph{Proc. ICFHR}, 2018, pp. 7--12.
 
 \bibitem{shen2021layoutparser}
 Z. Shen, R. Zhang, M. Dell, et al., ``LayoutParser: A unified toolkit for deep learning based document image analysis,'' in \emph{Proc. ICDAR}, 2021, pp. 131--146.
