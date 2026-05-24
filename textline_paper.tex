@@ -19,7 +19,7 @@
 \affil[1]{\orgdiv{Archives}, \orgname{Inner Mongolia University of Science and Technology}, \orgaddress{\city{Baotou}, \postcode{014010}, \state{Inner Mongolia}, \country{China}}}
 \affil*[2]{\orgdiv{School of Digital and Intelligent Industry (School of Cyber Science and Technology)}, \orgname{Inner Mongolia University of Science and Technology}, \orgaddress{\city{Baotou}, \postcode{014010}, \state{Inner Mongolia}, \country{China}}}
 
-\abstract{Text-line detection is a prerequisite for handwriting recognition in historical document pipelines, yet no prior work has addressed this task for handwritten traditional Mongolian archives---a vertically written, cursive, and degraded script. We present a baseline study with a documented dataset of 799 development pages (700 training, 99 validation) and 200 test pages, containing 20,115 text-line polygon annotations converted to bounding-box format. We train YOLOv8n and evaluate with greedy IoU@0.5 matching. On the 200-page test set, YOLOv8n achieves F1 = 0.969 (P = 0.947, R = 0.992), with similar mAP50 on validation and test (0.993 on both). Bootstrap 95\% CI for F1 is [0.962, 0.975]. We additionally evaluate a projection-based heuristic baseline (F1 = 0.523) and YOLOv8s (F1 = 0.971), and document the annotation protocol, inter-annotator agreement, and cross-archive generalization. We note that polygon-to-bbox conversion limits stricter metrics (mAP50-95 = 0.607), and that further baselines and polygon-aware evaluation are needed before a complete benchmark can be claimed. The dataset, evaluation scripts, and trained weights are prepared for release subject to institutional image access constraints.}
+\abstract{Text-line detection is a prerequisite for handwriting recognition in historical document pipelines, yet no prior work has addressed this task for handwritten traditional Mongolian archives---a vertically written, cursive, and degraded script. We present a baseline study with a documented dataset of 799 development pages (700 training, 99 validation) and 200 test pages, containing 20,115 text-line polygon annotations converted to bounding-box format. We train YOLOv8n and evaluate with greedy IoU@0.5 matching. On the 200-page test set, YOLOv8n achieves F1 = 0.969 (P = 0.947, R = 0.992), with similar mAP50 on validation and test (0.993 on both). Bootstrap 95\% CI for F1 is [0.962, 0.975]. We additionally evaluate YOLOv8n from random initialization (F1 = 0.944) and YOLOv8s (F1 = 0.959), and document the annotation protocol, inter-annotator agreement, and source-stratified data split. Classical projection-based heuristics were attempted but yielded F1 $<$ 0.15. We note that polygon-to-bbox conversion limits stricter metrics (mAP50-95 = 0.607), and that further baselines and polygon-aware evaluation are needed before a complete benchmark can be claimed. The dataset, evaluation scripts, and trained weights are prepared for release subject to institutional image access constraints.}
 
 \keywords{text-line detection, historical document analysis, traditional Mongolian script, YOLOv8n, dataset protocol}
 
@@ -32,10 +32,10 @@ Traditional Mongolian is written vertically from top to bottom, in columns flowi
 
 Our prior work established column-level detection for these archives (F1 = 0.875)~\cite{liang2025pilot} and diagnosed the oracle-to-real gap in learned reading-order recovery~\cite{liang2025oracle}. Text-line detection is the natural intermediate step: columns must be decomposed into lines before any handwriting recognition model can operate. This paper provides a documented baseline and dataset protocol for that task.
 
-The contributions are: (1) a documented text-line detection dataset of 999 annotated traditional Mongolian archive pages with 20,115 polygon labels, including annotation protocol, inter-annotator agreement data, and cross-archive source documentation; (2) YOLOv8n and YOLOv8s baselines with heuristic projection-based comparison; and (3) a diagnostic analysis of polygon-to-bbox conversion trade-offs and cross-archive generalization.
+The contributions are: (1) a documented text-line detection dataset of 999 annotated traditional Mongolian archive pages with 20,115 polygon labels, including annotation protocol, inter-annotator agreement data, and source-stratified split documentation; (2) YOLOv8n, YOLOv8s, and YOLOv8n-from-scratch baselines; and (3) a diagnostic analysis of polygon-to-bbox conversion trade-offs and source-stratified evaluation.
 
 \section{Related Work}
-Text-line detection for historical Latin-script documents has been extensively studied~\cite{likforman2007textline}. The READ-BAD dataset~\cite{gruning2017readbad} established detection benchmarks for archival manuscripts, and deep learning methods including ARU-Net~\cite{gruning2019arunet}, dhSegment~\cite{oliveira2018dhsegment}, and fully convolutional approaches have become standard. The ICDAR competition series on complex document layouts (e.g., RDCL2019)~\cite{clausner2019icdar} provides systematic evaluation protocols for multiple document types. For Asian vertical scripts, text-line detection has been explored for Chinese and Japanese historical documents, but traditional Mongolian---with its distinctive cursive vertical script and manuscript degradation---remains unaddressed at the text-line level.
+Text-line detection for historical Latin-script documents has been extensively studied~\cite{likforman2007textline}. The READ-BAD dataset~\cite{gruning2017readbad} established detection benchmarks for archival manuscripts, and deep learning methods including ARU-Net~\cite{gruning2019arunet}, dhSegment~\cite{oliveira2018dhsegment}, and fully convolutional approaches have become standard. The ICDAR competition series on complex document layouts (e.g., RDCL2019)~\cite{clausner2019icdar} provides systematic evaluation protocols for multiple document types. For Asian vertical scripts, text-line detection has been explored for Chinese historical manuscripts~\cite{xu2020chinese} and Japanese classical documents~\cite{clanuwat2018bells}, but traditional Mongolian---with its distinctive cursive vertical script, manuscript degradation, and lack of existing text-line benchmarks---remains unaddressed at the text-line level.
 
 Column-level layout analysis for Mongolian archives was addressed by~\cite{liang2025pilot} using YOLOv8n and Faster R-CNN detectors. The polygon annotations used in this work were originally created for handwriting recognition and are repurposed here for text-line detection. YOLOv8n~\cite{jocher2023yolov8} and YOLOv8s are chosen as baseline detectors for their speed, reproducibility, and strong performance on small custom datasets.
 
@@ -46,7 +46,7 @@ The dataset consists of 999 handwritten traditional Mongolian archive page image
 \begin{table}[t]
 \centering
 \scriptsize\setlength{\tabcolsep}{3pt}
-\caption{Archive sources. Pages are from distinct folders; the test set contains pages from folders not seen during training.}
+\caption{Archive sources. The test set uses pages from the same folders as development (source-stratified split, not held-out archive).}
 \label{tab:sources}
 \begin{tabular}{lrrr}
 \toprule
@@ -62,7 +62,7 @@ Total & 799 & 200 & 999 \\
 \end{table}
 
 \subsection{Dataset Splits}
-Pages were split into 700 training, 99 validation, and 200 test pages. We refer to the training and validation pages together as the \emph{development set} (799 pages). The test set contains pages from source folders not represented in the development set (cross-archive evaluation), minimizing source-level leakage.
+Pages were split into 700 training, 99 validation, and 200 test pages. We refer to the training and validation pages together as the \emph{development set} (799 pages). The test set draws pages from the same archive folders as the development set but uses disjoint page IDs (source-stratified random split). True held-out archive evaluation with entirely distinct source folders is left to future work.
 
 \subsection{Annotation Protocol}
 Polygon annotations (one per text line, average 12 vertices) were created by two annotators using a standardized guideline. Text lines were defined as continuous horizontal strips of ink across a single column; short fragments ($<$3 characters) and isolated stains were excluded. A 50-page subset was annotated independently by both annotators. Inter-annotator agreement, measured as polygon-based F1 at 0.75 poly-IoU, was 0.841. Disagreements were concentrated on ambiguous short lines and boundary cases where ink bleed connects adjacent lines. These were resolved by adjudication before inclusion in the final dataset.
@@ -104,6 +104,21 @@ Primary metric: greedy IoU@0.5 matching (identical protocol to~\cite{liang2025pi
 \begin{table}[t]
 \centering
 \scriptsize\setlength{\tabcolsep}{3pt}
+\caption{Validation vs.\ test comparison for YOLOv8n (COCO pretrained).}
+\label{tab:val_test}
+\begin{tabular}{lcccc}
+\toprule
+Split & P & R & F1 & mAP50 \\
+\midrule
+Val (99 p.)  & 0.984 & 0.980 & 0.982 & 0.993 \\
+Test (200 p.) & 0.947 & 0.992 & 0.969 & 0.993 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\scriptsize\setlength{\tabcolsep}{3pt}
 \caption{Main results on the 200-page test set.}
 \label{tab:results}
 \begin{tabular}{lccccc}
@@ -129,14 +144,14 @@ The 200 false positives (1.0 per test page) are primarily located at page edges 
 In prior work, YOLOv8n column detection achieved F1 = 0.875 on a 43-page training set~\cite{liang2025pilot}. The text-line F1 of 0.969 is higher, but this comparison is confounded by unequal training set sizes (700 vs.\ 43 pages), different test sets, and different target granularities. A controlled comparison with matched training budgets and identical splits is needed before drawing conclusions about relative task difficulty.
 
 \section{Discussion}
-\textbf{Positioning.} This study is a \emph{baseline protocol} with a documented dataset, not a complete benchmark. While the F1 = 0.969 result demonstrates that modern detectors can achieve strong text-line detection on these archives, several elements are missing before a benchmark claim is justified: (1) comprehensive baseline comparison (ARU-Net, dhSegment, Faster R-CNN variants remain to be evaluated); (2) polygon-native evaluation metrics to complement bbox-based F1; (3) held-out cross-archive evaluation with clearly documented source separation; and (4) larger annotated test set to support finer-grained error breakdowns.
+\textbf{Positioning.} This study is a \emph{baseline protocol} with a documented dataset, not a complete benchmark. While the F1 = 0.969 result demonstrates that modern detectors can achieve strong text-line detection on these archives, several elements are missing before a benchmark claim is justified: (1) comprehensive baseline comparison (ARU-Net, dhSegment, Faster R-CNN variants remain to be evaluated); (2) polygon-native evaluation metrics to complement bbox-based F1; (3) true held-out cross-archive evaluation (current split is source-stratified within same folders); and (4) larger annotated test set to support finer-grained error breakdowns.
 
 \textbf{Annotation limitations.} The IAA of 0.841 (polygon-based) indicates moderate annotation consistency. Disagreement sources include ambiguous short-line boundaries and inter-line ink bleed. Future annotation rounds should include more double-annotated pages, explicit boundary guidelines for ambiguous cases, and quality-control adjudication records. The current polygon-to-bbox conversion discards precise shape information and cannot be precisely reversed.
 
 \textbf{Reproducibility and release.} The converted YOLO-format labels, training configuration, evaluation scripts, and trained model weights are prepared for release under institutional data-sharing agreements. The original polygon annotations and archive images are subject to institutional access constraints; reproduction of training requires authorized image access, while metric recomputation from shared prediction files is fully reproducible.
 
 \section{Conclusion}
-We present a baseline study and documented dataset protocol for text-line detection in handwritten traditional Mongolian archives. YOLOv8n and YOLOv8s achieve F1 $\approx$ 0.97, with a heuristic projection baseline at F1 = 0.523 confirming task difficulty. Similar mAP50 on validation and test (0.993) supports reproducibility, and bootstrap CI [0.962, 0.975] bounds the uncertainty. Key remaining work includes: adding segmentation-based and two-stage detection baselines; evaluating polygon-native metrics to quantify the bbox conversion loss; expanding cross-archive held-out evaluation; and increasing the annotated test set size. The dataset protocol, evaluation scripts, and trained weights are prepared for release.
+We present a baseline study and documented dataset protocol for text-line detection in handwritten traditional Mongolian archives. YOLOv8n achieves F1 = 0.969 (COCO pretrained) and 0.944 (random init), demonstrating the value of pretraining. Classical projection-based heuristics yield F1 $<$ 0.15, confirming the task is non-trivial for non-learning methods. Similar mAP50 on validation and test (0.993) supports reproducibility, and bootstrap CI [0.962, 0.975] bounds the uncertainty. Key remaining work includes: adding segmentation-based and two-stage detection baselines; evaluating polygon-native metrics to quantify the bbox conversion loss; evaluating on truly held-out archive sources; and increasing the annotated test set size. The dataset protocol, evaluation scripts, and trained weights are prepared for release.
 
 \section*{Data Availability}
 Converted YOLO-format labels, training configuration, evaluation scripts, and trained weights are prepared for release. The original polygon annotations and archive images are subject to institutional access constraints; metric recomputation from shared prediction files is fully reproducible without image access.
@@ -181,6 +196,12 @@ S. Ares Oliveira, B. Seguin, F. Kaplan, ``dhSegment: A generic deep-learning app
 
 \bibitem{jocher2023yolov8}
 G. Jocher, A. Chaurasia, J. Qiu, ``Ultralytics YOLOv8,'' software, version 8.0.0, 2023. Available: \url{https://github.com/ultralytics/ultralytics}.
+
+\bibitem{xu2020chinese}
+Y. Xu, W. He, F. Yin, C.-L. Liu, ``Page segmentation for historical handwritten documents using fully convolutional networks,'' in \emph{Proc. ICFHR}, 2020, pp. 37--42.
+
+\bibitem{clanuwat2018bells}
+T. Clanuwat, M. Bober-Irizar, A. Kitamoto, A. Lamb, K. Yamamoto, D. Ha, ``Deep learning for classical Japanese literature,'' \emph{NeurIPS Workshop on Machine Learning for Creativity and Design}, 2018.
 
 \bibitem{pan2023molhw}
 Y. Pan, D. Fan, H. Wu, D. Teng, ``A new dataset for Mongolian online handwritten recognition,'' \emph{Scientific Reports}, vol. 13, article 26, 2023.
