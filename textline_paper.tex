@@ -139,10 +139,17 @@ Table~\ref{tab:results} reports the main results. COCO-pretrained YOLOv8n achiev
 The gap between mAP50 (0.993) and mAP50-95 (0.607) is substantial. This reflects the polygon-to-bbox conversion: at stricter IoU thresholds, rectangular boxes poorly approximate the curved extent of handwritten Mongolian text lines. The $\sim$39-point mAP drop mirrors findings in ICDAR competitions where polygon-based evaluation is preferred for curved text~\cite{clausner2019icdar}. Future work should evaluate polygon-aware metrics directly on the original annotations.
 
 \subsection{Error Analysis}
-The 200 false positives (1.0 per test page) are primarily located at page edges (scanning borders: $\sim$40\%), near seal impressions ($\sim$25\%), at ink bleed between lines ($\sim$20\%), and in other regions ($\sim$15\%). The 30 false negatives are concentrated on very short text lines ($\le$3 words, $\sim$60\%) and severely faded ink segments ($\sim$40\%). Incorporating the Ignore-region protocol from~\cite{liang2025pilot} could reduce edge and seal FPs, but would not affect the inter-line bleed FPs, which reflect a fundamental ambiguity in polygon-to-bbox conversion.
+The 200 false positives (1.0 per test page) are primarily located at page edges (scanning borders: $\sim$40\%), near seal impressions ($\sim$25\%), at ink bleed between lines ($\sim$20\%), and in other regions ($\sim$15\%). The 30 false negatives are concentrated on very short text lines ($\le$3 words, $\sim$60\%) and severely faded ink segments ($\sim$40\%). Figure~\ref{fig:failure} shows representative examples of each error type. Incorporating the Ignore-region protocol from~\cite{liang2025pilot} could reduce edge and seal FPs, but would not affect the inter-line bleed FPs, which reflect a fundamental ambiguity in polygon-to-bbox conversion.
 
 \subsection{Comparison with Column Detection}
 In prior work, YOLOv8n column detection achieved F1 = 0.875 on a 43-page training set~\cite{liang2025pilot}. The text-line F1 of 0.969 is higher, but this comparison is confounded by unequal training set sizes (700 vs.\ 43 pages), different test sets, and different target granularities. A controlled comparison with matched training budgets and identical splits is needed before drawing conclusions about relative task difficulty.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{figures/failure_montage_textline.png}
+\caption{Representative detection failures. Left to right: edge false positive (scanning border), seal-induced false positive, missed short text line (false negative), missed faded ink (false negative).}
+\label{fig:failure}
+\end{figure}
 
 \section{Discussion}
 \textbf{Positioning.} This paper is intentionally a \emph{dataset/protocol note and baseline report}, not a comprehensive method comparison or complete benchmark. The contributions are the documented annotation protocol with IAA data, the converted YOLO-format dataset, and recomputable evaluation metrics from shared prediction files. While the F1 = 0.969 result demonstrates the feasibility of text-line detection on these archives, several elements are intentionally left to future work: (1) comprehensive baseline comparison (ARU-Net, dhSegment, Faster R-CNN, and segmentation-based methods remain to be evaluated); (2) polygon-native evaluation to complement bbox-based metrics; (3) true held-out cross-archive evaluation; and (4) larger annotated test set for finer-grained error analysis. A qualitative failure figure (edge FP, seal FP, ink bleed, short-line FN) would also strengthen future iterations.
