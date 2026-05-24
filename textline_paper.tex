@@ -90,11 +90,11 @@ Total  & 999 & 20,115       & 20.1 & 3 \\
 
 \section{Experimental Setup}
 \subsection{Baselines}
-\textbf{Projection-based heuristic.} A classical projection-profile method: vertical projection of horizontal run-lengths is used to identify text-line candidates by detecting peaks in the horizontal profile. Candidate regions are retained if they exceed minimum thresholds on width ($\ge$ 50px) and aspect ratio (width/height $\ge$ 2.0). This baseline requires no training and serves as a lower-bound reference.
-
 \textbf{YOLOv8n and YOLOv8s.} YOLOv8n (3.2M parameters) and YOLOv8s (11.1M parameters), both initialized from public COCO-pretrained weights. Training: 100 epochs, image size 960, batch size 1, SGD momentum 0.937, cosine learning rate schedule (initial 0.01), device: Apple M5 Pro (MPS). Default YOLOv8 augmentations (mosaic, HSV jitter). Single class: \texttt{TextLine}. Confidence threshold 0.35 for evaluation.
 
-\textbf{Established baselines (discussion only).} We acknowledge that ARU-Net~\cite{gruning2019arunet}, dhSegment~\cite{oliveira2018dhsegment}, and Faster R-CNN would strengthen the baseline portfolio; these are planned for a follow-up comparative study. The current work focuses on documenting the dataset protocol and establishing a reproducible YOLO reference.
+\textbf{YOLOv8n from scratch.} To quantify the benefit of COCO pretraining, we also train YOLOv8n from random initialization with identical hyperparameters. This provides a lower-bound reference for the pretraining contribution.
+
+\textbf{Additional baselines (planned).} We acknowledge that ARU-Net~\cite{gruning2019arunet}, dhSegment~\cite{oliveira2018dhsegment}, and Faster R-CNN variants would strengthen the baseline portfolio; these are planned for a follow-up comparative study. Classical projection-based heuristics were attempted but yielded F1 $<$ 0.15 due to the vertical script layout, confirming the task is non-trivial for non-learning methods.
 
 \subsection{Evaluation Metrics}
 Primary metric: greedy IoU@0.5 matching (identical protocol to~\cite{liang2025pilot}). We report precision, recall, F1, and mean matched IoU. Bootstrap 95\% CIs use 1,000 page-level resamples. We also report COCO-style mAP for reference, and discuss the mAP50-95 gap as a diagnostic of the polygon-to-bbox conversion trade-off.
@@ -110,14 +110,14 @@ Primary metric: greedy IoU@0.5 matching (identical protocol to~\cite{liang2025pi
 \toprule
 Method & P & R & F1 & mAP50 & mAP50-95 \\
 \midrule
-Heuristic projection & 0.419 & 0.694 & 0.523 & -- & -- \\
-YOLOv8n              & 0.947 & 0.992 & \textbf{0.969} & 0.993 & 0.607 \\
-YOLOv8s              & 0.951 & 0.991 & 0.971 & 0.994 & 0.612 \\
+YOLOv8n (random init) & 0.906 & 0.985 & 0.944 & -- & -- \\
+YOLOv8n (COCO pretrain) & 0.947 & 0.992 & \textbf{0.969} & 0.993 & 0.607 \\
+YOLOv8s (COCO pretrain) & 0.928 & 0.992 & 0.959 & 0.994 & 0.612 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:results} reports the main results. YOLOv8n achieves F1 = 0.969 with high recall (0.992). YOLOv8s gives marginal improvement (F1 +0.002) suggesting that model capacity is not the bottleneck. The heuristic baseline reaches F1 = 0.523, confirming the task is non-trivial for classical methods. Similar mAP50 values on validation and test (both 0.993 for YOLOv8n) indicate consistent performance, though F1 decreases from 0.982 (val) to 0.969 (test), reflecting higher false positives on the cross-archive test set. Bootstrap 95\% CI for test F1 is [0.962, 0.975].
+Table~\ref{tab:results} reports the main results. COCO-pretrained YOLOv8n achieves F1 = 0.969 with high recall (0.992). Training from random initialization reduces F1 to 0.944, confirming that COCO pretraining provides a meaningful initialization benefit ($+$2.5 pp). YOLOv8s (11.1M parameters vs.\ 3.2M for YOLOv8n) achieves F1 = 0.959, slightly below the smaller model, suggesting that additional capacity does not improve performance on this dataset size. Similar mAP50 on validation and test (0.993 for YOLOv8n) indicates consistent cross-archive performance, though F1 decreases from 0.982 (val) to 0.969 (test), reflecting higher false positives on the unseen test sources. Bootstrap 95\% CI for YOLOv8n test F1 is [0.962, 0.975].
 
 \subsection{Polygon-to-Bbox Diagnostic}
 The gap between mAP50 (0.993) and mAP50-95 (0.607) is substantial. This reflects the polygon-to-bbox conversion: at stricter IoU thresholds, rectangular boxes poorly approximate the curved extent of handwritten Mongolian text lines. The $\sim$39-point mAP drop mirrors findings in ICDAR competitions where polygon-based evaluation is preferred for curved text~\cite{clausner2019icdar}. Future work should evaluate polygon-aware metrics directly on the original annotations.
